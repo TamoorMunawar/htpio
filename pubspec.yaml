@@ -24,7 +24,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.example.htpio
+        package: com.ontechinc.htpio
         pluginClass: HtpioPlugin
       ios:
         pluginClass: HtpioPlugin
