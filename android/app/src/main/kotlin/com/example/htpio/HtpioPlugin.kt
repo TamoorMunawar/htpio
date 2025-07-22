@@ -1,13 +1,17 @@
-package com.ontechinc.htpio
+package com.ontechinc.htpio_example
 
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.PluginRegistry
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
 
-class HtpioPlugin : MethodChannel.MethodCallHandler {
+class HtpioPlugin : FlutterPlugin, MethodCallHandler {
+
+    private lateinit var channel: MethodChannel
 
     // Handle method calls from Flutter
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "getPlatformVersion" -> {
                 // Respond with the platform version
@@ -17,12 +21,14 @@ class HtpioPlugin : MethodChannel.MethodCallHandler {
         }
     }
 
-    companion object {
-        // Register the plugin with the Flutter engine
-        @JvmStatic
-        fun registerWith(registrar: PluginRegistry.Registrar) {
-            val channel = MethodChannel(registrar.messenger(), "htpio")
-            channel.setMethodCallHandler(HtpioPlugin())
-        }
+    // Called when the plugin is registered with the Flutter engine
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel = MethodChannel(binding.binaryMessenger, "htpio")
+        channel.setMethodCallHandler(this)
+    }
+
+    // Called when the plugin is unregistered from the Flutter engine
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel.setMethodCallHandler(null)
     }
 }

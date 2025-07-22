@@ -1,12 +1,7 @@
-package com.ontechinc.htpio
+package com.ontechinc.htpio_example
 
 import io.flutter.embedding.android.FlutterActivity
-import io.flutter.plugins.GeneratedPluginRegistrant
 
 class MainActivity: FlutterActivity() {
-    // Optionally, manually register the plugin if necessary (but typically this is not required)
-    override fun configureFlutterEngine() {
-        super.configureFlutterEngine()
-        GeneratedPluginRegistrant.registerWith(flutterEngine!!)
-    }
+    // No overrides needed for now
 }
