@@ -1,4 +1,4 @@
-package com.ontechinc.htpio_example
+package com.ontechinc.htpio
 
 import io.flutter.embedding.android.FlutterActivity
 
