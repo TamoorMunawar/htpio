@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _fetchData() async {
     try {
       final response = await client.send(HtpioRequest<String>(
-        url: 'https://api.mock.com/data',
+        url: 'https://dummyjson.com/products',
         cacheEnabled: true,
       ));
       setState(() => result = response.data);

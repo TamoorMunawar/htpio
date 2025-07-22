@@ -1,6 +1,8 @@
 # Changelog
 
-## [1.1.5] - 2025-07-22
+## [1.1.6]
+- Fix incorrect androidPackage and pluginClass path.
+
 ### Added
 - Initial release of `htpio` with the following features:
   - **Modular Middleware System**: Chainable and composable middleware for request/response logic.
