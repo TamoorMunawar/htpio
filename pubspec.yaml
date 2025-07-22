@@ -1,7 +1,7 @@
 name: htpio
 description: "A next-gen HTTP client for Flutter and Dart, featuring offline support, retry logic, token handling, and more."
 
-version: 1.1.6
+version: 1.1.7
 homepage: https://github.com/TamoorMunawar/htpio
 repository: https://github.com/TamoorMunawar/htpio
 
