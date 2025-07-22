@@ -1,16 +1,13 @@
 name: htpio
-description: "A new Flutter project."
-version: 1.0.0+1
+description: "A next-gen HTTP client for Flutter and Dart, featuring offline support, retry logic, token handling, and more."
+
+version: 1.0.0
 homepage: https://github.com/TamoorMunawar/htpio
 repository: https://github.com/TamoorMunawar/htpio
-
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
   flutter: '>=1.10.0'
-
-
 
 dependencies:
   flutter:
