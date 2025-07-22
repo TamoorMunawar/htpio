@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.4] - 2025-07-22
+## [1.1.5] - 2025-07-22
 ### Added
 - Initial release of `htpio` with the following features:
   - **Modular Middleware System**: Chainable and composable middleware for request/response logic.
