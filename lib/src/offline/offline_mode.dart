@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import '../../htpio_middleware.dart';
 import '../../htpio_request.dart';
-import '../../htpio_response.dart';
 import '../../htpio_error.dart';
 
 class OfflineMode extends HtpioMiddleware {

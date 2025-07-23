@@ -1,8 +1,8 @@
 // File: lib/src/download/htpio_download_manager.dart
-import 'dart:isolate';
+
 import 'dart:io';
 import 'dart:async';
-import 'dart:convert';
+
 import '../../htpio_error.dart';
 
 class HtpioDownloadManager {
