@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.11]
+## [1.1.12]
 - Fix incorrect androidPackage and pluginClass path.
 
 ### Added
