@@ -2,14 +2,13 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:htpio/htpio.dart'; // This is the package you're working on.
-import 'package:bcrypt/bcrypt.dart';
+
 
 // Define your custom HtpioClient for handling HTTP requests similar to ApiHelper
 class HtpioClient {
-  final Duration _timeoutDuration = const Duration(seconds: 30);
+
   final List<HtpioMiddleware> _middlewares = [];
   final List<HtpioInterceptor> _interceptors = [];
-  final HtpioCache _cache = HtpioCache();
   final DebugConsole _debug = DebugConsole();
 
   // Use middlewares and interceptors
