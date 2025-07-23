@@ -1,19 +1,23 @@
-// File: lib/src/htpio_client.dart
-import 'package:htpio/htpio.dart';
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
+import 'package:htpio/htpio.dart'; // This is the package you're working on.
+import 'package:bcrypt/bcrypt.dart';
 
-
-
-
+// Define your custom HtpioClient for handling HTTP requests similar to ApiHelper
 class HtpioClient {
+  final Duration _timeoutDuration = const Duration(seconds: 30);
   final List<HtpioMiddleware> _middlewares = [];
   final List<HtpioInterceptor> _interceptors = [];
   final HtpioCache _cache = HtpioCache();
   final DebugConsole _debug = DebugConsole();
 
+  // Use middlewares and interceptors
   void use(HtpioMiddleware middleware) => _middlewares.add(middleware);
   void addInterceptor(HtpioInterceptor interceptor) =>
       _interceptors.add(interceptor);
 
+  // Generic method to send requests
   Future<HtpioResponse<T>> send<T>(HtpioRequest<T> request) async {
     try {
       _debug.log('Sending request to ${request.url}');
@@ -26,12 +30,7 @@ class HtpioClient {
         request = await interceptor.onRequest(request) as HtpioRequest<T>;
       }
 
-      if (request.cacheEnabled) {
-        final cached = _cache.get<T>(request.url);
-        if (cached != null) return cached;
-      }
-
-      final response = await request.execute();  // Execute request dynamically
+      final response = await request.execute();  // Execute the request dynamically
 
       for (final interceptor in _interceptors.reversed) {
         await interceptor.onResponse(response);
@@ -41,90 +40,157 @@ class HtpioClient {
         await middleware.afterResponse(response);
       }
 
-      if (request.cacheEnabled) {
-        _cache.set<T>(request.url, response);
-      }
-
       return response;
     } catch (error) {
       final wrapped = HtpioError.from(error);
       _debug.log('Error: ${wrapped.message}');
-
-      for (final middleware in _middlewares) {
-        await middleware.onError(wrapped);
-      }
-
-      for (final interceptor in _interceptors.reversed) {
-        await interceptor.onError(wrapped, request);
-      }
-
       rethrow;
     }
   }
 
-  // GET Request handling (now correct)
-  Future<HtpioResponse<T>> get<T>(
-      String url,
-      T Function(Map<String, dynamic>) fromJson, {
-        Map<String, String>? headers,
-      }) async {
+  // GET Request handling (similar to ApiHelper)
+  Future<HtpioResponse<T>> getRequest<T>({
+    required String endpoint,
+    required T Function(Map<String, dynamic>) fromJson,
+    String? authToken,
+  }) async {
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      if (authToken != null) 'Authorization': 'Bearer $authToken',
+    };
+    log('REQUEST TO : $endpoint');
+    log('Headers: $headers');
+
     final request = HtpioRequest<T>(
-      url: url,
+      url: endpoint,
       method: 'GET',
       headers: headers,
-      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+      fromJson: fromJson,  // Pass `fromJson` for deserialization
     );
+
     return send(request);
   }
 
-  // POST Request handling
-  Future<HtpioResponse<T>> post<T>(
-      String url,
-      dynamic body,
-      T Function(Map<String, dynamic>) fromJson, {
-        Map<String, String>? headers,
-      }) async {
+  // POST Request handling (similar to ApiHelper)
+  Future<HtpioResponse<T>> postRequest<T>({
+    required String endpoint,
+    required dynamic data,
+    required T Function(Map<String, dynamic>) fromJson,
+    String? authToken,
+  }) async {
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      if (authToken != null) 'Authorization': 'Bearer $authToken',
+    };
+
     final request = HtpioRequest<T>(
-      url: url,
+      url: endpoint,
       method: 'POST',
-      body: body,
       headers: headers,
-      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+      body: jsonEncode(data),
+      fromJson: fromJson,  // Pass `fromJson` for deserialization
     );
+
     return send(request);
   }
 
-  // PUT Request handling
-  Future<HtpioResponse<T>> put<T>(
-      String url,
-      dynamic body,
-      T Function(Map<String, dynamic>) fromJson, {
-        Map<String, String>? headers,
-      }) async {
+  // PUT Request handling (similar to ApiHelper)
+  Future<HtpioResponse<T>> putRequest<T>({
+    required String endpoint,
+    required dynamic data,
+    required T Function(Map<String, dynamic>) fromJson,
+    String? authToken,
+  }) async {
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      if (authToken != null) 'Authorization': 'Bearer $authToken',
+    };
+
     final request = HtpioRequest<T>(
-      url: url,
+      url: endpoint,
       method: 'PUT',
-      body: body,
       headers: headers,
-      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+      body: jsonEncode(data),
+      fromJson: fromJson,  // Pass `fromJson` for deserialization
     );
+
     return send(request);
   }
 
-  // DELETE Request handling
-  Future<HtpioResponse<T>> delete<T>(
-      String url,
-      T Function(Map<String, dynamic>) fromJson, {
-        Map<String, String>? headers,
-      }) async {
+  // DELETE Request handling (similar to ApiHelper)
+  Future<HtpioResponse<T>> deleteRequest<T>({
+    required String endpoint,
+    required T Function(Map<String, dynamic>) fromJson,
+    String? authToken,
+  }) async {
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      if (authToken != null) 'Authorization': 'Bearer $authToken',
+    };
+
     final request = HtpioRequest<T>(
-      url: url,
+      url: endpoint,
       method: 'DELETE',
       headers: headers,
-      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+      fromJson: fromJson,  // Pass `fromJson` for deserialization
     );
+
+    return send(request);
+  }
+
+  // Handle file upload with data, similar to ApiHelper
+  Future<HtpioResponse<T>> postFilesWithDataRequest<T>({
+    required String endpoint,
+    required String fileJsonKey,
+    required List<File> files,
+    required Map<String, String>? data,
+    required T Function(Map<String, dynamic>) fromJson,
+  }) async {
+    Map<String, String> headers = {
+      'Content-Type': 'multipart/form-data',
+      // Add your Authorization headers if necessary
+    };
+
+    log('REQUEST TO : $endpoint');
+    log('Headers: $headers');
+
+    final request = HtpioRequest<T>(
+      url: endpoint,
+      method: 'POST',
+      headers: headers,
+      files: files,
+      body: data,
+      fromJson: fromJson,  // Pass `fromJson` for deserialization
+    );
+
+    return send(request);
+  }
+
+  // POST single file with data
+  Future<HtpioResponse<T>> postSingleFileWithDataRequest<T>({
+    required String endpoint,
+    required String fileJsonKey,
+    required File file,
+    required Map<String, String>? data,
+    required T Function(Map<String, dynamic>) fromJson,
+  }) async {
+    Map<String, String> headers = {
+      'Content-Type': 'multipart/form-data',
+      // Add your Authorization headers if necessary
+    };
+
+    log('REQUEST TO : $endpoint');
+    log('Headers: $headers');
+
+    final request = HtpioRequest<T>(
+      url: endpoint,
+      method: 'POST',
+      headers: headers,
+      file: file,
+      body: data,
+      fromJson: fromJson,  // Pass `fromJson` for deserialization
+    );
+
     return send(request);
   }
 }
-
-

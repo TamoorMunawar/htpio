@@ -54,15 +54,18 @@ class _HomePageState extends State<HomePage> {
   String result = '';
   List<Product> products = [];
 
-  // Fetch dynamic data from the API using GET request
+  // Fetch dynamic data from the API using GET request with our custom getRequest method
   Future<void> _fetchData() async {
     try {
-      final response = await client.get<List<Product>>(
-          'https://dummyjson.com/products',  // URL as a string
-              (json) => (json['products'] as List)  // fromJson logic
-              .map((item) => Product.fromJson(item))
-              .toList(),
-          headers: {}  // Headers, if any
+      final response = await client.getRequest<List<Product>>(
+        endpoint: 'https://dummyjson.com/products',  // API endpoint to fetch products
+        fromJson: (json) {
+          // Deserialization logic: map each product item to a Product object
+          return (json['products'] as List)
+              .map((item) => Product.fromJson(item as Map<String, dynamic>))
+              .toList();
+        },
+        authToken: null,  // Optional, add your token if needed
       );
 
       setState(() {
@@ -101,8 +104,9 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
                         children: [
-                          Text(product.title),
-                          // Add other product details here
+                          Text(product.title),  // Display product title
+                          const SizedBox(width: 10),
+                          Text('\$${product.price}'),  // Display product price
                         ],
                       ),
                     ),

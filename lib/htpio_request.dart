@@ -1,7 +1,6 @@
-// File: lib/src/htpio_request.dart
-
 import 'htpio_response.dart';
 import 'htpio_error.dart';
+import 'dart:io';  // For handling file uploads
 
 class HtpioRequest<T> {
   final String url;
@@ -12,6 +11,8 @@ class HtpioRequest<T> {
   Duration? timeout;
   bool _cancelled = false;
   final T Function(Map<String, dynamic>)? fromJson;  // fromJson function for deserialization
+  final File? file;  // Single file for upload
+  final List<File>? files;  // Multiple files for upload
 
   HtpioRequest({
     required this.url,
@@ -21,6 +22,8 @@ class HtpioRequest<T> {
     this.timeout,
     Map<String, String>? headers,
     this.fromJson,  // Accept fromJson function here
+    this.file,  // Single file upload
+    this.files,  // Multiple files upload
   }) : headers = headers ?? {};
 
   // Execute the dynamic network request
@@ -28,7 +31,7 @@ class HtpioRequest<T> {
     if (_cancelled) throw HtpioError('Request was cancelled');
 
     try {
-      // Making the request dynamically
+      // Making the request dynamically (can be adjusted for file handling)
       final responseJson = await _makeRequest(); // Simulated request handler
 
       // Safely cast 'data' to Map<String, dynamic> and use fromJson to deserialize
@@ -46,6 +49,13 @@ class HtpioRequest<T> {
   Future<Map<String, dynamic>> _makeRequest() async {
     // Simulate network delay and dynamic data fetching
     await Future.delayed(Duration(seconds: 2));  // Simulate network delay
+
+    // If a file is provided, simulate a file upload
+    if (file != null || files != null) {
+      print('Uploading file(s)...');
+      // Simulate uploading file(s) here
+    }
+
     return {
       'data': {
         'id': 1,
