@@ -1,3 +1,4 @@
+import 'htpio_client.dart';
 import 'htpio_response.dart';
 import 'htpio_error.dart';
 import 'dart:io';  // For handling file uploads
@@ -31,8 +32,8 @@ class HtpioRequest<T> {
     if (_cancelled) throw HtpioError('Request was cancelled');
 
     try {
-      // Making the request dynamically (can be adjusted for file handling)
-      final responseJson = await _makeRequest(); // Simulated request handler
+      // Making the request dynamically
+      final responseJson = await _makeRequest(); // Real network request with Htpio
 
       // Safely cast 'data' to Map<String, dynamic> and use fromJson to deserialize
       final data = responseJson['data'] is Map<String, dynamic>
@@ -45,25 +46,26 @@ class HtpioRequest<T> {
     }
   }
 
-  // Simulate an API response (you can replace this with actual network code)
+  // Make the actual network request using HtpioClient
   Future<Map<String, dynamic>> _makeRequest() async {
-    // Simulate network delay and dynamic data fetching
-    await Future.delayed(Duration(seconds: 2));  // Simulate network delay
+    final client = HtpioClient();
 
-    // If a file is provided, simulate a file upload
-    if (file != null || files != null) {
-      print('Uploading file(s)...');
-      // Simulate uploading file(s) here
-    }
+    // Prepare the HtpioRequest
+    final request = HtpioRequest<Map<String, dynamic>>(
+      url: url,
+      method: method,
+      body: body,
+      headers: headers,
+      fromJson: (json) => json,  // Directly return the json as it is
+    );
 
+    // Send the request and get the response
+    final response = await client.send<Map<String, dynamic>>(request);
+
+    // Return the response data and status code
     return {
-      'data': {
-        'id': 1,
-        'title': 'Dynamic Product',
-        'description': 'This is a dynamically fetched product description.',
-        'price': 49.99
-      },
-      'status_code': 200
+      'data': response.data,
+      'status_code': response.statusCode,
     };
   }
 
