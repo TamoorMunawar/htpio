@@ -32,8 +32,8 @@ class HtpioRequest<T> {
     if (_cancelled) throw HtpioError('Request was cancelled');
 
     try {
-      // Making the request dynamically
-      final responseJson = await _makeRequest(); // Real network request with Htpio
+      // Perform the real network request using HtpioClient
+      final responseJson = await _makeRequest();
 
       // Safely cast 'data' to Map<String, dynamic> and use fromJson to deserialize
       final data = responseJson['data'] is Map<String, dynamic>
@@ -50,17 +50,8 @@ class HtpioRequest<T> {
   Future<Map<String, dynamic>> _makeRequest() async {
     final client = HtpioClient();
 
-    // Prepare the HtpioRequest
-    final request = HtpioRequest<Map<String, dynamic>>(
-      url: url,
-      method: method,
-      body: body,
-      headers: headers,
-      fromJson: (json) => json,  // Directly return the json as it is
-    );
-
-    // Send the request and get the response
-    final response = await client.send<Map<String, dynamic>>(request);
+    // Send the request using HtpioClient's send method
+    final response = await client.send(this); // Pass 'this' as HtpioRequest object
 
     // Return the response data and status code
     return {
@@ -69,5 +60,6 @@ class HtpioRequest<T> {
     };
   }
 
+  // Cancel the request if needed
   void cancel() => _cancelled = true;
 }
