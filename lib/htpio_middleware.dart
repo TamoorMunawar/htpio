@@ -1,4 +1,3 @@
-// File: lib/src/htpio_middleware.dart
 import 'htpio_error.dart';
 import 'htpio_request.dart';
 import 'htpio_response.dart';

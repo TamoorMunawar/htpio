@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:htpio/htpio.dart';
 
-// Define the Product model
 class Product {
   final int id;
   final String title;
@@ -20,7 +19,7 @@ class Product {
       id: json['id'] as int,
       title: json['title'] as String,
       description: json['description'] as String,
-      price: json['price'] as double,
+      price: (json['price'] as num).toDouble(),
     );
   }
 }
@@ -53,69 +52,103 @@ class _HomePageState extends State<HomePage> {
   final HtpioClient client = HtpioClient();
   String result = '';
   List<Product> products = [];
+  bool isLoading = false;
 
-  // Fetch dynamic data from the API using GET request with our custom getRequest method
   Future<void> _fetchData() async {
+    setState(() {
+      isLoading = true;
+      result = 'Loading...';
+    });
+
     try {
       final response = await client.getRequest<List<Product>>(
-        endpoint: 'https://dummyjson.com/products',  // API endpoint to fetch products
+        endpoint: 'https://dummyjson.com/products',
         fromJson: (json) {
-          // Deserialization logic: map each product item to a Product object
-          return (json['products'] as List)
-              .map((item) => Product.fromJson(item as Map<String, dynamic>))
-              .toList();
+          if (json.containsKey('products')) {
+            return (json['products'] as List)
+                .map((item) => Product.fromJson(item as Map<String, dynamic>))
+                .toList();
+          } else if (json.containsKey('data') && json['data'] is List) {
+            return (json['data'] as List)
+                .map((item) => Product.fromJson(item as Map<String, dynamic>))
+                .toList();
+          } else {
+            return <Product>[];
+          }
         },
-        authToken: null,  // Optional, add your token if needed
+        authToken: null,
       );
 
       setState(() {
-        products = response.data;  // Store the fetched data
-        result = 'Fetched ${response.data.length} products';  // Show number of products fetched
+        products = response.data;
+        result = 'Successfully fetched ${response.data.length} products!';
+        isLoading = false;
       });
     } catch (e) {
-      setState(() => result = 'Error: $e');  // Handle any error
+      setState(() {
+        result = 'Error: $e';
+        isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Htpio Example')),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(result),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _fetchData,
-            child: const Text('Fetch Products'),
-          ),
-          const SizedBox(height: 20),
-          if (products.isNotEmpty)
-            Expanded(
-              child: ListView.builder(
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return Card(
-                    margin: const EdgeInsets.all(8),
-                    elevation: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Text(product.title),  // Display product title
-                          const SizedBox(width: 10),
-                          Text('\$${product.price}'),  // Display product price
-                        ],
-                      ),
-                    ),
-                  );
-                },
+      appBar: AppBar(
+        title: const Text('Htpio Example'),
+        backgroundColor: Colors.blue,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              result,
+              style: TextStyle(
+                fontSize: 16,
+                color: result.startsWith('Error') ? Colors.red : Colors.green,
               ),
+              textAlign: TextAlign.center,
             ),
-        ],
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: isLoading ? null : _fetchData,
+              child: isLoading 
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Fetch Products'),
+            ),
+            const SizedBox(height: 20),
+            if (products.isNotEmpty)
+              Expanded(
+                child: ListView.builder(
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    return Card(
+                      margin: const EdgeInsets.all(8),
+                      elevation: 5,
+                      child: ListTile(
+                        title: Text(product.title),
+                        subtitle: Text(product.description),
+                        trailing: Text(
+                          '\$${product.price}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
+
+
