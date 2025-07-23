@@ -16,14 +16,17 @@ class OfflineMode extends HtpioMiddleware {
     });
   }
 
+  // Flush the queued requests when the network is back
   void _flushQueue() async {
     final queue = List<HtpioRequest>.from(_queue);
     _queue.clear();
     for (final request in queue) {
-      await request.execute();
+      // Execute the request, the `fromJson` function is already part of the request
+      await request.execute();  // No need to pass `fromJson` here
     }
   }
 
+  // Queue requests when offline
   @override
   Future<void> beforeRequest(HtpioRequest request) async {
     if (!_isOnline) {
@@ -32,5 +35,6 @@ class OfflineMode extends HtpioMiddleware {
     }
   }
 
+  // Dispose of the subscription when done
   void dispose() => _subscription.cancel();
 }

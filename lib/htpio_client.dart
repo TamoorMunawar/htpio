@@ -1,6 +1,9 @@
 // File: lib/src/htpio_client.dart
 import 'package:htpio/htpio.dart';
 
+
+
+
 class HtpioClient {
   final List<HtpioMiddleware> _middlewares = [];
   final List<HtpioInterceptor> _interceptors = [];
@@ -28,7 +31,7 @@ class HtpioClient {
         if (cached != null) return cached;
       }
 
-      final response = await request.execute();
+      final response = await request.execute();  // Execute request dynamically
 
       for (final interceptor in _interceptors.reversed) {
         await interceptor.onResponse(response);
@@ -58,4 +61,70 @@ class HtpioClient {
       rethrow;
     }
   }
+
+  // GET Request handling (now correct)
+  Future<HtpioResponse<T>> get<T>(
+      String url,
+      T Function(Map<String, dynamic>) fromJson, {
+        Map<String, String>? headers,
+      }) async {
+    final request = HtpioRequest<T>(
+      url: url,
+      method: 'GET',
+      headers: headers,
+      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+    );
+    return send(request);
+  }
+
+  // POST Request handling
+  Future<HtpioResponse<T>> post<T>(
+      String url,
+      dynamic body,
+      T Function(Map<String, dynamic>) fromJson, {
+        Map<String, String>? headers,
+      }) async {
+    final request = HtpioRequest<T>(
+      url: url,
+      method: 'POST',
+      body: body,
+      headers: headers,
+      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+    );
+    return send(request);
+  }
+
+  // PUT Request handling
+  Future<HtpioResponse<T>> put<T>(
+      String url,
+      dynamic body,
+      T Function(Map<String, dynamic>) fromJson, {
+        Map<String, String>? headers,
+      }) async {
+    final request = HtpioRequest<T>(
+      url: url,
+      method: 'PUT',
+      body: body,
+      headers: headers,
+      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+    );
+    return send(request);
+  }
+
+  // DELETE Request handling
+  Future<HtpioResponse<T>> delete<T>(
+      String url,
+      T Function(Map<String, dynamic>) fromJson, {
+        Map<String, String>? headers,
+      }) async {
+    final request = HtpioRequest<T>(
+      url: url,
+      method: 'DELETE',
+      headers: headers,
+      fromJson: fromJson,  // Pass `fromJson` here for deserialization
+    );
+    return send(request);
+  }
 }
+
+
