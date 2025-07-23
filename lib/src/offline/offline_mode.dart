@@ -56,8 +56,7 @@ class OfflineMode extends HtpioMiddleware {
       try {
         await request.execute();
       } catch (e) {
-        // Log error but continue with other requests
-        print('Failed to execute queued request: $e');
+
       }
     }
   }
