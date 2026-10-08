@@ -1,30 +1,27 @@
 name: htpio
-description: "A next-gen HTTP client for Flutter and Dart, featuring offline support, retry logic, token handling, and more."
-
-version: 1.1.13
+description: "Easy HTTP client for Flutter and Dart: baseUrl, typed JSON, interceptors, retry, auth refresh, caching, offline queue, uploads, downloads and mocking."
+version: 1.2.0
 homepage: https://github.com/TamoorMunawar/htpio
 repository: https://github.com/TamoorMunawar/htpio
+issue_tracker: https://github.com/TamoorMunawar/htpio/issues
+topics:
+  - http
+  - network
+  - api
+  - rest
+  - interceptor
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
-  flutter: '>=1.10.0'
+  flutter: '>=3.27.0'
 
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.5.0
+  http_parser: ^4.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  test: ^1.25.15
-
-flutter:
-  uses-material-design: true
-  plugin:
-    platforms:
-      android:
-        package: com.ontechinc.htpio
-        pluginClass: HtpioPlugin
-      ios:
-        pluginClass: HtpioPlugin

@@ -1,42 +1,60 @@
 import '../../htpio_response.dart';
 
+/// In-memory response cache with a time-to-live.
+///
+/// ```dart
+/// final htpio = HtpioClient(cache: HtpioCache(defaultTtl: Duration(minutes: 5)));
+/// await htpio.get('/products', cache: true); // network
+/// await htpio.get('/products', cache: true); // served from memory
+/// ```
 class HtpioCache {
-  final Map<String, HtpioResponse> _memoryCache = {};
-  final Map<String, DateTime> _cacheTimestamps = {};
+  HtpioCache({
+    this.defaultTtl = const Duration(minutes: 5),
+    this.maxEntries = 100,
+  });
+
   final Duration defaultTtl;
 
-  HtpioCache({this.defaultTtl = const Duration(minutes: 5)});
+  /// Oldest entries are evicted beyond this size.
+  final int maxEntries;
+
+  final Map<String, _Entry> _entries = {};
 
   HtpioResponse<T>? get<T>(String key) {
-    final timestamp = _cacheTimestamps[key];
-    if (timestamp != null && DateTime.now().difference(timestamp) > defaultTtl) {
-      // Cache expired
-      _memoryCache.remove(key);
-      _cacheTimestamps.remove(key);
+    final entry = _entries[key];
+    if (entry == null) return null;
+    if (DateTime.now().isAfter(entry.expiresAt)) {
+      _entries.remove(key);
       return null;
     }
-    
-    final res = _memoryCache[key];
-    if (res is HtpioResponse<T>) return res;
-    return null;
+    final response = entry.response;
+    return response is HtpioResponse<T> ? response : null;
   }
 
   void set<T>(String key, HtpioResponse<T> response, {Duration? ttl}) {
-    _memoryCache[key] = response;
-    _cacheTimestamps[key] = DateTime.now();
+    _entries.remove(key);
+    _entries[key] = _Entry(response, DateTime.now().add(ttl ?? defaultTtl));
+    while (_entries.length > maxEntries) {
+      _entries.remove(_entries.keys.first);
+    }
   }
 
-  void remove(String key) {
-    _memoryCache.remove(key);
-    _cacheTimestamps.remove(key);
+  void remove(String key) => _entries.remove(key);
+
+  void clear() => _entries.clear();
+
+  /// Whether [key] has an entry that has not expired.
+  bool containsKey(String key) {
+    final entry = _entries[key];
+    return entry != null && !DateTime.now().isAfter(entry.expiresAt);
   }
 
-  void clear() {
-    _memoryCache.clear();
-    _cacheTimestamps.clear();
-  }
+  int get size => _entries.length;
+}
 
-  bool containsKey(String key) => _memoryCache.containsKey(key);
-  
-  int get size => _memoryCache.length;
+class _Entry {
+  _Entry(this.response, this.expiresAt);
+
+  final HtpioResponse response;
+  final DateTime expiresAt;
 }
