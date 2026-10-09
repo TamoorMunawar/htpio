@@ -1,317 +1,482 @@
+# htpio
 
-# htpio ✨
+[![pub package](https://img.shields.io/pub/v/htpio.svg)](https://pub.dev/packages/htpio)
+[![likes](https://img.shields.io/pub/likes/htpio)](https://pub.dev/packages/htpio/score)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`htpio` is the next-gen HTTP client for Flutter mobile apps and cross-platform Dart — designed to simplify networking, handle mobile-specific challenges, and boost developer productivity with a smile 😊
+An easy HTTP client for Flutter. It's as simple as `package:http` for quick calls, and has the features a real app needs: base URL, typed JSON, interceptors, retry, token refresh, caching, an offline queue, uploads, downloads and mocking.
 
-## 🌟 Features
-- **Modular Middleware System**
-- **In-App Debug Console** — like DevTools, but mobile
-- **Smart Offline Mode** for flaky networks
-- **Pause/Resume File Downloads**
-- **Auto Auth Token Handling** — plug & play
-- **Mobile-Friendly Error Middleware**
-- **Typed Requests & Responses** ✅
-- **Mock API Mode** for instant testing
-- **Intelligent Retry with Backoff**
-- **Caching, Timeout & Cancel**
-- Built for Flutter — light, fast, joyful
-
-## 🧠 Why `htpio`?
-
-Other packages are great for basic requests, but `htpio` goes beyond:
-
-- Designed for mobile realities (offline, errors, retries)
-- Great DX with emoji-friendly debug UI
-- Mock & test with ease
-
-## 💻 Compatibility
-- Flutter (iOS & Android)
-- Dart CLI & Server
-
-
-# Tasks You Can Perform with the htpio Package
-
-## 1. Basic HTTP Requests
-
-You can perform all standard HTTP requests (GET, POST, PUT, DELETE) with type-safe responses:
+Works on **Android, iOS, Web, macOS, Windows and Linux**.
 
 ```dart
-// GET request example
-final client = HtpioClient();
-final response = await client.getRequest<List<Product>>(
-  endpoint: 'https://api.example.com/products',
-  fromJson: (json) => (json['data'] as List)
-      .map((item) => Product.fromJson(item))
-      .toList(),
-);
+import 'package:htpio/htpio.dart';
 
-// POST request example
-final response = await client.postRequest<User>(
-  endpoint: 'https://api.example.com/users',
-  data: {'name': 'John', 'email': 'john@example.com'},
-  fromJson: (json) => User.fromJson(json),
+final htpio = HtpioClient(baseUrl: 'https://dummyjson.com');
+
+void main() async {
+  final res = await htpio.get('/products/1');
+  print(res.data['title']);
+}
+```
+
+---
+
+## Contents
+
+- [Install](#install)
+- [Making requests](#making-requests)
+- [Typed responses](#typed-responses)
+- [Sending data](#sending-data)
+- [Handling errors](#handling-errors)
+- [Client configuration](#client-configuration)
+- [Interceptors](#interceptors)
+  - [Auth token & refresh](#auth-token--refresh)
+  - [Retry](#retry)
+  - [Logging](#logging)
+  - [Write your own](#write-your-own)
+- [Middleware](#middleware)
+- [Cancel & timeout](#cancel--timeout)
+- [Caching](#caching)
+- [Offline mode](#offline-mode)
+- [Downloads](#downloads)
+- [Mocking & testing](#mocking--testing)
+- [Debug overlay](#debug-overlay)
+- [Upgrading from 1.1.x](#upgrading-from-11x)
+
+---
+
+## Install
+
+```bash
+flutter pub add htpio
+```
+
+```dart
+import 'package:htpio/htpio.dart';
+```
+
+## Making requests
+
+Create **one** client and reuse it everywhere. It keeps connections open, which makes requests faster.
+
+```dart
+final htpio = HtpioClient(baseUrl: 'https://api.example.com');
+
+await htpio.get('/users');
+await htpio.get('/users', queryParameters: {'page': 2, 'limit': 20});
+await htpio.post('/users', data: {'name': 'Ada'});
+await htpio.put('/users/1', data: {'name': 'Ada Lovelace'});
+await htpio.patch('/users/1', data: {'age': 36});
+await htpio.delete('/users/1');
+await htpio.head('/users');
+
+// Any other method
+await htpio.request('/users', method: 'OPTIONS');
+```
+
+Every call returns an `HtpioResponse`:
+
+```dart
+final res = await htpio.get('/users/1');
+
+res.data;        // decoded JSON (Map / List), or a String if the body isn't JSON
+res.statusCode;  // 200
+res.headers;     // {'content-type': 'application/json', ...}
+res.isSuccess;   // true for 2xx
+```
+
+Paths are joined to `baseUrl`. A full URL (`https://...`) is used as is.
+
+## Typed responses
+
+Pass `fromJson` to get your own model back:
+
+```dart
+class User {
+  User({required this.id, required this.name});
+  factory User.fromJson(Map<String, dynamic> json) =>
+      User(id: json['id'], name: json['name']);
+  final int id;
+  final String name;
+}
+
+final res = await htpio.get<User>('/users/1', fromJson: User.fromJson);
+print(res.data.name); // res.data is a User
+```
+
+For lists, or any other shape, use `decoder`:
+
+```dart
+final res = await htpio.get<List<User>>(
+  '/users',
+  decoder: (data) => (data as List).map((e) => User.fromJson(e)).toList(),
 );
 ```
 
-## 2. Authentication
-
-You can handle authentication using the built-in token interceptor:
+Need raw text or bytes (images, PDFs)?
 
 ```dart
-final authInterceptor = AuthTokenInterceptor(
-  token: 'your-auth-token',  // Initial token
-  headerName: 'Authorization',
-  tokenPrefix: 'Bearer',
-);
-
-final client = HtpioClient();
-client.addInterceptor(authInterceptor);
-
-// Later, update the token
-authInterceptor.setToken('new-token');
-
-// Or clear it
-authInterceptor.clearToken();
+final html  = await htpio.get<String>('/page', responseType: ResponseType.plain);
+final image = await htpio.get<Uint8List>('/logo.png', responseType: ResponseType.bytes);
 ```
 
-## 3. Request/Response Interception
+## Sending data
 
-You can intercept and modify requests and responses using interceptors:
+`data` is encoded for you based on its type:
+
+| You pass | Sent as |
+|---|---|
+| `Map`, `List`, or an object with `toJson()` | JSON (`application/json`) |
+| `FormData` | `multipart/form-data` (file upload) |
+| `String` | text, as is |
+| `List<int>` / `Uint8List` | raw bytes |
+| `Map` + header `content-type: application/x-www-form-urlencoded` | form fields |
+
+**JSON**
 
 ```dart
-class LoggingInterceptor extends HtpioInterceptor {
+await htpio.post('/login', data: {'email': 'a@b.com', 'password': 'secret'});
+```
+
+**File upload**
+
+```dart
+final form = FormData.fromMap({
+  'title': 'My holiday',
+  'photo': HtpioMultipartFile.fromPath(file.path, contentType: 'image/jpeg'),
+  'extras': [
+    HtpioMultipartFile.fromPath(a.path),
+    HtpioMultipartFile.fromPath(b.path),
+  ],
+});
+
+await htpio.post('/upload', data: form);
+```
+
+On the web, use `HtpioMultipartFile.fromBytes(bytes, filename: 'photo.jpg')`. There are no file paths in a browser.
+
+**Form URL-encoded**
+
+```dart
+await htpio.post(
+  '/token',
+  data: {'grant_type': 'password', 'username': 'ada'},
+  headers: {'content-type': 'application/x-www-form-urlencoded'},
+);
+```
+
+## Handling errors
+
+Every failure throws one type, `HtpioError`. Check `type` to find out what happened:
+
+```dart
+try {
+  final res = await htpio.get('/users/1');
+} on HtpioError catch (e) {
+  switch (e.type) {
+    case HtpioErrorType.badResponse:      // server replied 4xx / 5xx
+      print(e.statusCode);                // 404
+      print(e.response?.data);            // error body from the server
+    case HtpioErrorType.timeout:          // too slow
+    case HtpioErrorType.connectionError:  // no internet, DNS, TLS...
+    case HtpioErrorType.cancel:           // you cancelled it
+    case HtpioErrorType.offline:          // OfflineMode queued it
+    case HtpioErrorType.parse:            // fromJson / decoder threw
+    case HtpioErrorType.unknown:
+      print(e.message);
+  }
+}
+```
+
+By default only 2xx counts as success. To change that:
+
+```dart
+final htpio = HtpioClient(validateStatus: (status) => status < 500);
+```
+
+## Client configuration
+
+```dart
+final htpio = HtpioClient(
+  baseUrl: 'https://api.example.com/v1',
+  headers: {'accept-language': 'en'},     // sent with every request
+  queryParameters: {'app': 'mobile'},     // added to every request
+  timeout: Duration(seconds: 20),         // default per-request limit
+  validateStatus: (s) => s >= 200 && s < 300,
+  interceptors: [AuthTokenInterceptor(token: token), RetryInterceptor()],
+  cache: HtpioCache(),
+);
+
+// Change settings later
+htpio.baseUrl = 'https://staging.example.com/v1';
+htpio.headers['x-app-version'] = '2.0.0';
+
+// Per-request values override client values
+await htpio.get('/me', headers: {'accept-language': 'de'}, timeout: Duration(seconds: 5));
+
+// Free resources when you are done (e.g. in a test's tearDown)
+htpio.close();
+```
+
+## Interceptors
+
+Interceptors can change requests and responses, or recover from errors. Requests pass through interceptors in the order you added them. Responses pass through in reverse order.
+
+```dart
+htpio.addInterceptor(AuthTokenInterceptor(token: token));
+htpio.addInterceptor(RetryInterceptor());
+htpio.addInterceptor(HtpioLogInterceptor());
+```
+
+### Auth token & refresh
+
+```dart
+final auth = AuthTokenInterceptor(
+  token: savedToken,                       // or: tokenProvider: () => storage.read('token')
+  onRefreshToken: () async {               // optional: called on 401
+    final res = await HtpioClient().post(
+      'https://api.example.com/refresh',
+      data: {'refresh_token': refreshToken},
+    );
+    return res.data['access_token'];       // return null to give up
+  },
+);
+htpio.addInterceptor(auth);
+
+auth.setToken(newToken);  // after login
+auth.clearToken();        // after logout
+```
+
+Every request gets `Authorization: Bearer <token>`. When the server answers `401`, htpio calls `onRefreshToken` once and retries the request with the new token. If many requests fail together, they share a single refresh. You can change the header with `headerName: 'x-api-key', tokenPrefix: ''`.
+
+### Retry
+
+```dart
+htpio.addInterceptor(RetryInterceptor(
+  maxRetries: 3,
+  baseDelay: Duration(seconds: 1),  // 1s, 2s, 4s (exponential backoff)
+));
+```
+
+It retries timeouts, connection errors and status codes `408, 429, 500, 502, 503, 504`. By default it only retries safe methods (`GET, HEAD, PUT, DELETE, OPTIONS`), so a payment `POST` is never sent twice. You can change this with `retryMethods`, `retryableStatusCodes`, or your own `retryIf: (error) => ...`.
+
+### Logging
+
+```dart
+htpio.addInterceptor(HtpioLogInterceptor(
+  requestBody: true,
+  responseBody: true,
+));
+```
+
+```
+--> POST https://api.example.com/users
+{name: Ada}
+<-- 201 POST https://api.example.com/users
+{id: 7, name: Ada}
+```
+
+`Authorization` and cookie headers always print as `***`.
+
+### Write your own
+
+Override only what you need:
+
+```dart
+class ApiKeyInterceptor extends HtpioInterceptor {
   @override
   Future<HtpioRequest> onRequest(HtpioRequest request) async {
-    print('🚀 Request: ${request.method} ${request.url}');
+    request.headers['x-api-key'] = 'my-key';
     return request;
   }
 
   @override
   Future<HtpioResponse> onResponse(HtpioResponse response) async {
-    print('✅ Response: ${response.statusCode}');
+    // e.g. unwrap {"data": ...} envelopes
     return response;
   }
-}
 
-final client = HtpioClient();
-client.addInterceptor(LoggingInterceptor());
-```
-
-## 4. Middleware for Request Processing
-
-You can use middleware to process requests and responses:
-
-```dart
-class TimingMiddleware extends HtpioMiddleware {
-  late DateTime _startTime;
-  
   @override
-  Future<void> beforeRequest(HtpioRequest request) async {
-    _startTime = DateTime.now();
-  }
-  
-  @override
-  Future<void> afterResponse(HtpioResponse response) async {
-    final duration = DateTime.now().difference(_startTime);
-    print('Request took ${duration.inMilliseconds}ms');
+  Future<HtpioResponse> onError(HtpioError error, HtpioRequest request) async {
+    if (error.statusCode == 503) {
+      // Return a response to recover...
+      return HtpioResponse(data: {'maintenance': true}, statusCode: 200, request: request);
+    }
+    throw error; // ...or throw to pass the error on
   }
 }
-
-final client = HtpioClient();
-client.use(TimingMiddleware());
 ```
 
-## 5. Automatic Retry on Failure
+Inside an interceptor, `client` is the `HtpioClient` it was added to. Use `client!.send(request)` to send a request again.
 
-You can automatically retry failed requests using the RetryInterceptor:
+## Middleware
+
+Middleware observes requests without changing them. Use it for analytics, timing, or crash reporting.
 
 ```dart
-final retryInterceptor = RetryInterceptor(
-  maxRetries: 3,
-  baseDelay: Duration(seconds: 1),
-  useExponentialBackoff: true,
-  retryableStatusCodes: [408, 429, 500, 502, 503, 504],
-);
+class AnalyticsMiddleware extends HtpioMiddleware {
+  @override
+  Future<void> beforeRequest(HtpioRequest request) async =>
+      analytics.log('api_call', {'path': request.uri.path});
 
-final client = HtpioClient();
-client.addInterceptor(retryInterceptor);
+  @override
+  Future<void> onError(HtpioError error) async =>
+      crashlytics.recordError(error, error.stackTrace);
+}
+
+htpio.use(AnalyticsMiddleware());
 ```
 
-## 6. Response Caching
-
-You can cache responses to reduce network requests:
+## Cancel & timeout
 
 ```dart
-final cache = HtpioCache(defaultTtl: Duration(minutes: 10));
+final token = CancelToken();
 
-// Check cache before making a request
-String cacheKey = 'GET:https://api.example.com/data';
-final cachedResponse = cache.get<MyData>(cacheKey);
+htpio.get('/search', queryParameters: {'q': text}, cancelToken: token);
 
-if (cachedResponse != null) {
-  return cachedResponse;
-} else {
-  final response = await client.getRequest<MyData>(...);
-  cache.set(cacheKey, response);
-  return response;
+token.cancel(); // the request stops and throws HtpioError(type: cancel)
+```
+
+A typical search-as-you-type:
+
+```dart
+CancelToken? _last;
+
+Future<void> onChanged(String text) async {
+  _last?.cancel();
+  _last = CancelToken();
+  final res = await htpio.get('/search', queryParameters: {'q': text}, cancelToken: _last);
 }
 ```
 
-## 7. File Downloads with Progress Tracking
-
-You can download files with progress tracking:
+Timeouts cover the whole request, from connecting to the last byte:
 
 ```dart
-final downloadManager = HtpioDownloadManager();
+await htpio.get('/report', timeout: Duration(seconds: 60));
+```
 
-// Listen to download progress
-downloadManager.progressStream.listen((progress) {
-  print('Download progress: ${(progress.progress * 100).toStringAsFixed(1)}%');
+## Caching
+
+```dart
+final htpio = HtpioClient(
+  baseUrl: 'https://api.example.com',
+  cache: HtpioCache(defaultTtl: Duration(minutes: 5)),
+);
+
+await htpio.get('/categories', cache: true); // network
+await htpio.get('/categories', cache: true); // from memory for 5 minutes
+
+htpio.cache!.clear();
+```
+
+Only successful `GET` requests made with `cache: true` are cached.
+
+## Offline mode
+
+```dart
+final offline = OfflineMode();
+htpio.use(offline);
+
+offline.connectivityStream.listen((online) {
+  showBanner(online ? 'Back online' : 'You are offline');
 });
-
-// Start a download
-final file = await downloadManager.downloadFile(
-  url: 'https://example.com/large-file.zip',
-  savePath: '/path/to/save/file.zip',
-  headers: {'Authorization': 'Bearer token'},
-  onProgress: (progress) {
-    // Update UI with progress
-    setState(() {
-      downloadProgress = progress;
-    });
-  },
-);
-
-// Pause, resume, or cancel downloads
-downloadManager.pauseDownload('https://example.com/large-file.zip');
-downloadManager.resumeDownload('https://example.com/large-file.zip');
-downloadManager.cancelDownload('https://example.com/large-file.zip');
+offline.replayResults.listen((result) => print('replayed: $result'));
 ```
 
-## 8. Mock Server for Testing
+While the device is offline, requests fail straight away with `HtpioErrorType.offline`, so you don't wait for a timeout. `POST`, `PUT`, `PATCH` and `DELETE` requests are queued, then sent again automatically when the connection comes back. Change this with `queueMethods`.
 
-You can create mock responses for testing without actual network requests:
+For a one-off check, use `ConnectivityHelper.isOnline()`.
+
+## Downloads
 
 ```dart
-final mockServer = MockServer();
-mockServer.enable();
+final downloads = HtpioDownloadManager();
 
-// Register a mock response
-mockServer.registerMock(
-  'https://api.example.com/users',
-  {'id': 1, 'name': 'Test User'},
-  statusCode: 200,
-  method: 'GET',
-  delay: Duration(milliseconds: 300), // Simulate network delay
+final file = await downloads.downloadFile(
+  url: 'https://example.com/video.mp4',
+  savePath: '${dir.path}/video.mp4',
+  onProgress: (p) => setState(() => progress = p), // 0.0 – 1.0
 );
 
-// Register sequential responses
-mockServer.registerSequentialMocks(
-  'https://api.example.com/status',
-  [
-    MockResponse(data: {'status': 'pending'}, statusCode: 200),
-    MockResponse(data: {'status': 'processing'}, statusCode: 200),
-    MockResponse(data: {'status': 'completed'}, statusCode: 200),
-  ],
+downloads.pauseDownload(url);
+downloads.resumeDownload(url);
+downloads.cancelDownload(url); // throws HtpioError(type: cancel), removes the partial file
+```
+
+`downloads.progressStream` reports progress for every running download. Downloading to a file needs a file system. On the web, use `htpio.get(url, responseType: ResponseType.bytes)` instead.
+
+## Mocking & testing
+
+**Mock server.** Build UI before the backend exists, or run demos offline:
+
+```dart
+final mock = MockServer()..enable();
+mock.registerMock('/users/1', {'id': 1, 'name': 'Ada'});
+mock.registerMock('/users/2', {'error': 'not found'}, statusCode: 404);
+mock.registerMock('/slow', {'ok': true}, delay: Duration(seconds: 2));
+mock.registerSequentialMocks('/job', [
+  MockResponse(data: {'state': 'pending'}),
+  MockResponse(data: {'state': 'done'}),
+]);
+
+final htpio = HtpioClient(baseUrl: 'https://api.example.com', mockServer: mock);
+```
+
+**Unit tests.** Inject `MockClient` from `package:http/testing.dart`:
+
+```dart
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+
+final htpio = HtpioClient(
+  baseUrl: 'https://api.test',
+  httpClient: MockClient((request) async {
+    expect(request.url.path, '/users/1');
+    return http.Response('{"id": 1, "name": "Ada"}', 200);
+  }),
 );
 ```
 
-## 9. Offline Mode Support
+## Debug overlay
 
-You can queue requests when offline and execute them when back online:
-
-```dart
-final offlineMode = OfflineMode(checkInterval: Duration(seconds: 10));
-final client = HtpioClient();
-client.use(offlineMode);
-
-// Listen to connectivity changes
-offlineMode.connectivityStream.listen((isOnline) {
-  print('Device is ${isOnline ? 'online' : 'offline'}');
-});
-
-// Check current status
-if (offlineMode.isOnline) {
-  print('Device is currently online');
-} else {
-  print('Device is currently offline');
-  print('Queued requests: ${offlineMode.queuedRequestsCount}');
-}
-
-// Manually retry queued requests
-await offlineMode.retryQueuedRequests();
-```
-
-## 10. Connectivity Monitoring
-
-You can monitor network connectivity:
+Show the latest requests on screen while you develop:
 
 ```dart
-// Check if device is online
-final isOnline = await ConnectivityHelper.isOnline();
-
-// More reliable check with multiple hosts
-final isReliablyOnline = await ConnectivityHelper.isOnlineReliable(
-  hosts: ['google.com', 'cloudflare.com', '8.8.8.8'],
-  timeout: Duration(seconds: 3),
-);
-
-// Listen to connectivity changes
-ConnectivityHelper.onStatusChange.listen((isOnline) {
-  print('Connection status changed: ${isOnline ? 'online' : 'offline'}');
-});
-
-// Check if connected to WiFi
-final isWiFi = await ConnectivityHelper.isWiFiConnected();
-```
-
-## 11. Debugging Support
-
-You can debug network requests with a visual console overlay:
-
-```dart
-final debugConsole = DebugConsole();
-debugConsole.log('Starting network request...');
-
-// In your Flutter widget tree
-Overlay(
-  initialEntries: [
-    OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          // Your app UI
-          YourAppWidget(),
-          // Debug overlay
-          debugConsole.overlay(),
-        ],
-      ),
-    ),
+Stack(
+  children: [
+    const MyHomePage(),
+    if (kDebugMode) DebugConsole().overlay(lines: 5),
   ],
 )
 ```
 
-## 12. File Uploads
+It shows method, URL and errors, but never headers or bodies, so tokens don't appear on screen.
 
-You can upload files with additional form data:
+## Upgrading from 1.1.x
 
-```dart
-final response = await client.postSingleFileWithDataRequest<UploadResult>(
-  endpoint: 'https://api.example.com/upload',
-  fileJsonKey: 'file',
-  file: File('/path/to/image.jpg'),
-  data: {'description': 'Profile picture'},
-  fromJson: (json) => UploadResult.fromJson(json),
-);
+Version 1.2 is backwards compatible. The old methods still work but are deprecated:
 
-// Upload multiple files
-final response = await client.postFilesWithDataRequest<UploadResult>(
-  endpoint: 'https://api.example.com/upload-multiple',
-  fileJsonKey: 'files',
-  files: [File('/path/to/file1.jpg'), File('/path/to/file2.jpg')],
-  data: {'album': 'Vacation 2023'},
-  fromJson: (json) => UploadResult.fromJson(json),
-);
-```
+| 1.1.x | 1.2+ |
+|---|---|
+| `getRequest(endpoint: url, fromJson: f)` | `get(url, fromJson: f)` |
+| `postRequest(endpoint: url, data: d, fromJson: f)` | `post(url, data: d, fromJson: f)` |
+| `putRequest` / `deleteRequest` | `put` / `delete` |
+| `authToken: t` | `AuthTokenInterceptor(token: t)` |
+| `postSingleFileWithDataRequest` / `postFilesWithDataRequest` | `post(url, data: FormData.fromMap({...}))` |
+| `request.execute()` | `client.send(request)` |
 
-The htpio package provides a comprehensive set of tools for handling HTTP requests in Dart and Flutter applications, with features comparable to popular packages like http and dio, but with additional functionality for caching, offline support, mocking, and debugging.
-        
+Also new in 1.2:
+
+- Errors for 4xx and 5xx responses are now thrown. Before, they returned silently.
+- `RetryInterceptor` now actually retries.
+- File uploads actually send the files.
+
+See the [CHANGELOG](CHANGELOG.md) for details.
+
+## Contributing
+
+Found a bug or want a feature? Open an [issue](https://github.com/TamoorMunawar/htpio/issues). Pull requests are welcome; please run `flutter analyze` and `flutter test` first.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

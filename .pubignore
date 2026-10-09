@@ -1,0 +1,9 @@
+# .pubignore replaces .gitignore for `pub publish`, so repeat what matters.
+.team/
+.dart_tool/
+build/
+example/build/
+example/.dart_tool/
+pubspec.lock
+.idea/
+*.iml

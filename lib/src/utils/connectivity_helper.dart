@@ -1,74 +1,59 @@
-import 'dart:io';
 import 'dart:async';
 
+import '../platform/platform.dart';
+
+/// Simple internet checks. On mobile and desktop a DNS lookup is used; on
+/// the web the browser's online flag is used.
 class ConnectivityHelper {
   static const Duration _defaultTimeout = Duration(seconds: 5);
   static const String _defaultHost = 'google.com';
-  static const int _defaultPort = 53;
 
-  /// Check if the device is connected to the internet
+  /// Whether the device can reach the internet.
   static Future<bool> isOnline({
     String host = _defaultHost,
-    int port = _defaultPort,
+    @Deprecated('Unused. Will be removed in 2.0.0.') int port = 53,
     Duration timeout = _defaultTimeout,
-  }) async {
-    try {
-      final result = await InternetAddress.lookup(host).timeout(timeout);
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
+  }) {
+    return lookupHost(host, timeout);
   }
 
-  /// Check connectivity with multiple hosts for better reliability
+  /// Like [isOnline] but tries several hosts.
   static Future<bool> isOnlineReliable({
-    List<String> hosts = const ['google.com', 'cloudflare.com', '8.8.8.8'],
+    List<String> hosts = const [
+      'google.com',
+      'cloudflare.com',
+      'one.one.one.one'
+    ],
     Duration timeout = _defaultTimeout,
   }) async {
     for (final host in hosts) {
-      try {
-        final result = await InternetAddress.lookup(host).timeout(timeout);
-        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-          return true;
-        }
-      } catch (_) {
-        continue;
-      }
+      if (await lookupHost(host, timeout)) return true;
     }
     return false;
   }
 
-  /// Stream that emits online/offline status changes
-  static Stream<bool> get onStatusChange {
-    return Stream.periodic(
-      const Duration(seconds: 5),
-      (_) => isOnline(),
-    ).asyncMap((future) => future).distinct();
+  /// Emits `true`/`false` whenever the online status changes, checking
+  /// every [interval].
+  static Stream<bool> watch({Duration interval = _defaultTimeout}) {
+    return Stream<void>.periodic(interval)
+        .asyncMap((_) => isOnline())
+        .distinct();
   }
 
-  /// Get network interface information
-  static Future<List<NetworkInterface>> getNetworkInterfaces() async {
-    try {
-      return await NetworkInterface.list(
-        includeLoopback: false,
-        type: InternetAddressType.any,
-      );
-    } catch (_) {
-      return [];
-    }
-  }
+  /// Same as [watch] with a 5 second interval.
+  static Stream<bool> get onStatusChange => watch();
 
-  /// Check if connected to WiFi (basic check)
+  /// Network interfaces (empty on the web).
+  static Future<List<NetworkInterface>> getNetworkInterfaces() =>
+      listNetworkInterfaces();
+
+  /// Rough Wi-Fi check based on interface names. Use the
+  /// `connectivity_plus` package if you need an exact answer.
   static Future<bool> isWiFiConnected() async {
-    try {
-      final interfaces = await getNetworkInterfaces();
-      return interfaces.any((interface) => 
-        interface.name.toLowerCase().contains('wlan') ||
-        interface.name.toLowerCase().contains('wifi') ||
-        interface.name.toLowerCase().contains('en0')
-      );
-    } catch (_) {
-      return false;
-    }
+    final interfaces = await listNetworkInterfaces();
+    return interfaces.any((i) {
+      final name = i.name.toLowerCase();
+      return name.contains('wlan') || name.contains('wifi') || name == 'en0';
+    });
   }
 }

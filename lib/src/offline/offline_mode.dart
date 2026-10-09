@@ -1,86 +1,127 @@
 import 'dart:async';
-import 'dart:io';
+
+import '../../htpio_error.dart';
 import '../../htpio_middleware.dart';
 import '../../htpio_request.dart';
-import '../../htpio_error.dart';
+import '../utils/connectivity_helper.dart';
 
+/// Queues requests while the device is offline and sends them again when
+/// the connection returns.
+///
+/// ```dart
+/// final offline = OfflineMode();
+/// htpio.use(offline);
+///
+/// offline.connectivityStream.listen((online) => print('online: $online'));
+/// ```
+///
+/// While offline, requests fail fast with an `HtpioError` of type
+/// `HtpioErrorType.offline`. Requests whose method is in [queueMethods] are
+/// kept and replayed through the client (interceptors included) once
+/// online. Results of replayed requests are reported on [replayResults].
 class OfflineMode extends HtpioMiddleware {
-  final List<HtpioRequest> _queue = [];
-  final StreamController<bool> _connectivityController = StreamController.broadcast();
-  Timer? _connectivityTimer;
-  bool _isOnline = true;
+  OfflineMode({
+    this.checkInterval = const Duration(seconds: 5),
+    Future<bool> Function()? connectivityChecker,
+    this.queueMethods = const {'POST', 'PUT', 'PATCH', 'DELETE'},
+    this.maxQueueSize = 100,
+  }) : _check = connectivityChecker ?? ConnectivityHelper.isOnline {
+    _timer = Timer.periodic(checkInterval, (_) => refresh());
+    unawaited(refresh());
+  }
+
   final Duration checkInterval;
 
-  OfflineMode({this.checkInterval = const Duration(seconds: 5)}) {
-    _startConnectivityCheck();
-  }
+  /// HTTP methods kept for replay. GET requests are usually just retried by
+  /// the UI, so they are not queued by default.
+  final Set<String> queueMethods;
 
-  Stream<bool> get connectivityStream => _connectivityController.stream;
+  final int maxQueueSize;
+
+  final Future<bool> Function() _check;
+  final List<HtpioRequest> _queue = [];
+  final StreamController<bool> _connectivity = StreamController.broadcast();
+  final StreamController<Object> _replays = StreamController.broadcast();
+  Timer? _timer;
+  bool _isOnline = true;
+  bool _flushing = false;
+
+  /// Emits `true` when the device comes back online and `false` when it
+  /// goes offline.
+  Stream<bool> get connectivityStream => _connectivity.stream;
+
+  /// Emits the `HtpioResponse` or `HtpioError` of each replayed request.
+  Stream<Object> get replayResults => _replays.stream;
+
   bool get isOnline => _isOnline;
+
   int get queuedRequestsCount => _queue.length;
 
-  void _startConnectivityCheck() {
-    _connectivityTimer = Timer.periodic(checkInterval, (_) async {
-      final wasOnline = _isOnline;
-      _isOnline = await _checkConnectivity();
-      
-      if (!wasOnline && _isOnline) {
-        // Just came back online
-        _connectivityController.add(true);
-        await _flushQueue();
-      } else if (wasOnline && !_isOnline) {
-        // Just went offline
-        _connectivityController.add(false);
-      }
-    });
-  }
-
-  Future<bool> _checkConnectivity() async {
+  /// Checks connectivity now and replays the queue when back online.
+  Future<void> refresh() async {
+    final wasOnline = _isOnline;
+    bool online;
     try {
-      // Try to connect to a reliable host
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      online = await _check();
     } catch (_) {
-      return false;
+      online = false;
     }
-  }
-
-  Future<void> _flushQueue() async {
-    if (_queue.isEmpty) return;
-    
-    final queue = List<HtpioRequest>.from(_queue);
-    _queue.clear();
-    
-    for (final request in queue) {
-      try {
-        await request.execute();
-      } catch (e) {
-
-      }
+    if (_connectivity.isClosed) return;
+    _isOnline = online;
+    if (!wasOnline && online) {
+      _connectivity.add(true);
+      await _flushQueue();
+    } else if (wasOnline && !online) {
+      _connectivity.add(false);
     }
   }
 
   @override
   Future<void> beforeRequest(HtpioRequest request) async {
-    if (!_isOnline) {
-      _queue.add(request);
-      throw HtpioError('Device is offline - request queued for later execution');
+    if (_isOnline) return;
+    final queued = queueMethods.contains(request.method.toUpperCase()) &&
+        _queue.length < maxQueueSize;
+    if (queued) _queue.add(request);
+    throw HtpioError(
+      queued
+          ? 'Device is offline - request queued for later execution'
+          : 'Device is offline',
+      type: HtpioErrorType.offline,
+      request: request,
+    );
+  }
+
+  Future<void> _flushQueue() async {
+    final owner = client;
+    if (_flushing || _queue.isEmpty || owner == null) return;
+    _flushing = true;
+    try {
+      while (_queue.isNotEmpty && _isOnline) {
+        final request = _queue.removeAt(0);
+        if (request.isCancelled) continue;
+        try {
+          final response = await owner.send(request);
+          if (!_replays.isClosed) _replays.add(response);
+        } catch (e) {
+          if (!_replays.isClosed) _replays.add(e);
+        }
+      }
+    } finally {
+      _flushing = false;
     }
   }
 
-  void clearQueue() {
-    _queue.clear();
-  }
+  void clearQueue() => _queue.clear();
 
+  /// Replays queued requests now if online.
   Future<void> retryQueuedRequests() async {
-    if (_isOnline) {
-      await _flushQueue();
-    }
+    if (_isOnline) await _flushQueue();
   }
 
   void dispose() {
-    _connectivityTimer?.cancel();
-    _connectivityController.close();
+    _timer?.cancel();
+    _connectivity.close();
+    _replays.close();
     _queue.clear();
   }
 }
