@@ -2,6 +2,8 @@ import 'htpio_request.dart';
 
 /// A completed HTTP response.
 class HtpioResponse<T> {
+  /// Creates a response. htpio builds these for you; create one yourself in
+  /// interceptors or tests.
   HtpioResponse({
     required this.data,
     required this.statusCode,
@@ -10,6 +12,7 @@ class HtpioResponse<T> {
     this.reasonPhrase,
   }) : headers = headers ?? const {};
 
+  /// Builds a response from a JSON map, reading `status_code` (default 200).
   factory HtpioResponse.fromJson(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromJson,
@@ -24,6 +27,7 @@ class HtpioResponse<T> {
   /// by `fromJson`/`decoder`.
   final T data;
 
+  /// HTTP status code, e.g. `200`.
   final int statusCode;
 
   /// Response headers. Keys are lower-case.

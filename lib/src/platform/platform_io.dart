@@ -29,17 +29,21 @@ Future<List<NetworkInterface>> listNetworkInterfaces() async {
 class FileTarget {
   FileTarget._(this.file, this._sink);
 
+  /// The file being written.
   final File file;
   final IOSink _sink;
 
+  /// Creates [path] (and its folders) for writing.
   static Future<FileTarget> open(String path) async {
     final file = File(path);
     await file.parent.create(recursive: true);
     return FileTarget._(file, file.openWrite());
   }
 
+  /// Appends [bytes].
   void add(List<int> bytes) => _sink.add(bytes);
 
+  /// Finishes writing.
   Future<void> close() => _sink.close();
 
   /// Closes the sink and removes the partial file.

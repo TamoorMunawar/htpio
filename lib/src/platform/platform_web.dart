@@ -21,13 +21,16 @@ Future<List<NetworkInterface>> listNetworkInterfaces() async => const [];
 
 /// Web placeholder for `dart:io` `File`. Paths cannot be read on the web.
 class File {
+  /// Creates a placeholder for [path].
   File(this.path);
 
+  /// The file path.
   final String path;
 }
 
 /// Web placeholder for `dart:io` `NetworkInterface`.
 abstract class NetworkInterface {
+  /// Interface name.
   String get name;
 }
 
@@ -35,15 +38,20 @@ abstract class NetworkInterface {
 class FileTarget {
   FileTarget._();
 
+  /// Not available on the web.
   File get file => throw UnsupportedError(_message);
 
+  /// Not available on the web.
   static Future<FileTarget> open(String path) async =>
       throw UnsupportedError(_message);
 
+  /// Not available on the web.
   void add(List<int> bytes) => throw UnsupportedError(_message);
 
+  /// No-op on the web.
   Future<void> close() async {}
 
+  /// No-op on the web.
   Future<void> discard() async {}
 
   static const _message = 'Saving files to a path is not supported on the web. '

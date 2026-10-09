@@ -8,6 +8,8 @@ An easy HTTP client for Flutter. It's as simple as `package:http` for quick call
 
 Works on **Android, iOS, Web, macOS, Windows and Linux**.
 
+**Full documentation:** every class and function, with copy-paste examples: **[tamoormunawar.github.io/htpio](https://tamoormunawar.github.io/htpio/)**
+
 ```dart
 import 'package:htpio/htpio.dart';
 
@@ -20,6 +22,30 @@ void main() async {
 ```
 
 ---
+
+## Every function at a glance
+
+| You want to… | Use | Docs |
+|---|---|---|
+| Create a client | `HtpioClient(baseUrl: …, headers: …, timeout: …)` | [HtpioClient](https://tamoormunawar.github.io/htpio/#HtpioClient) |
+| Read data | `get('/path', queryParameters: {…})` | [get](https://tamoormunawar.github.io/htpio/#get) |
+| Create / replace / change / delete | `post` · `put` · `patch` · `delete` | [post](https://tamoormunawar.github.io/htpio/#post) · [put](https://tamoormunawar.github.io/htpio/#put) · [patch](https://tamoormunawar.github.io/htpio/#patch) · [delete](https://tamoormunawar.github.io/htpio/#delete) |
+| Only headers / any other method | `head` · `request(path, method: …)` | [head](https://tamoormunawar.github.io/htpio/#head) · [request](https://tamoormunawar.github.io/htpio/#request) |
+| Send a request object | `send(HtpioRequest(…))` | [send](https://tamoormunawar.github.io/htpio/#send) · [HtpioRequest](https://tamoormunawar.github.io/htpio/#HtpioRequest) |
+| Get your own model back | `fromJson:` / `decoder:` | [fromJson vs decoder](https://tamoormunawar.github.io/htpio/#fromJson-decoder) |
+| Get text or bytes | `responseType: ResponseType.plain / .bytes` | [ResponseType](https://tamoormunawar.github.io/htpio/#ResponseType) |
+| Upload files | `FormData.fromMap({'f': HtpioMultipartFile.fromPath(…)})` | [FormData](https://tamoormunawar.github.io/htpio/#FormData) · [HtpioMultipartFile](https://tamoormunawar.github.io/htpio/#HtpioMultipartFile) |
+| Handle errors | `on HtpioError catch (e)` → `e.type`, `e.statusCode`, `e.response` | [HtpioError](https://tamoormunawar.github.io/htpio/#HtpioError) · [HtpioErrorType](https://tamoormunawar.github.io/htpio/#HtpioErrorType) |
+| Cancel a request | `CancelToken()` → `cancel()` | [CancelToken](https://tamoormunawar.github.io/htpio/#CancelToken) |
+| Add a login token / refresh it | `AuthTokenInterceptor(token:, onRefreshToken:)` | [AuthTokenInterceptor](https://tamoormunawar.github.io/htpio/#AuthTokenInterceptor) |
+| Retry failures | `RetryInterceptor(maxRetries: 3)` | [RetryInterceptor](https://tamoormunawar.github.io/htpio/#RetryInterceptor) |
+| Log traffic | `HtpioLogInterceptor()` | [HtpioLogInterceptor](https://tamoormunawar.github.io/htpio/#HtpioLogInterceptor) |
+| Write your own hook | `extends HtpioInterceptor` / `HtpioMiddleware` | [HtpioInterceptor](https://tamoormunawar.github.io/htpio/#HtpioInterceptor) · [HtpioMiddleware](https://tamoormunawar.github.io/htpio/#HtpioMiddleware) |
+| Cache GET responses | `HtpioClient(cache: HtpioCache())` + `cache: true` | [HtpioCache](https://tamoormunawar.github.io/htpio/#HtpioCache) |
+| Work offline | `use(OfflineMode())` | [OfflineMode](https://tamoormunawar.github.io/htpio/#OfflineMode) · [ConnectivityHelper](https://tamoormunawar.github.io/htpio/#ConnectivityHelper) |
+| Download big files | `HtpioDownloadManager().downloadFile(…)` | [HtpioDownloadManager](https://tamoormunawar.github.io/htpio/#HtpioDownloadManager) |
+| Fake the API | `MockServer()..registerMock(…)` | [MockServer](https://tamoormunawar.github.io/htpio/#MockServer) · [MockResponse](https://tamoormunawar.github.io/htpio/#MockResponse) |
+| See requests on screen | `DebugConsole().overlay()` | [DebugConsole](https://tamoormunawar.github.io/htpio/#DebugConsole) |
 
 ## Contents
 

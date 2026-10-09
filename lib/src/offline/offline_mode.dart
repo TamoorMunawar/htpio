@@ -20,6 +20,7 @@ import '../utils/connectivity_helper.dart';
 /// kept and replayed through the client (interceptors included) once
 /// online. Results of replayed requests are reported on [replayResults].
 class OfflineMode extends HtpioMiddleware {
+  /// Starts watching connectivity right away.
   OfflineMode({
     this.checkInterval = const Duration(seconds: 5),
     Future<bool> Function()? connectivityChecker,
@@ -30,12 +31,14 @@ class OfflineMode extends HtpioMiddleware {
     unawaited(refresh());
   }
 
+  /// How often connectivity is checked.
   final Duration checkInterval;
 
   /// HTTP methods kept for replay. GET requests are usually just retried by
   /// the UI, so they are not queued by default.
   final Set<String> queueMethods;
 
+  /// Requests beyond this many are not queued.
   final int maxQueueSize;
 
   final Future<bool> Function() _check;
@@ -53,8 +56,10 @@ class OfflineMode extends HtpioMiddleware {
   /// Emits the `HtpioResponse` or `HtpioError` of each replayed request.
   Stream<Object> get replayResults => _replays.stream;
 
+  /// Result of the latest connectivity check.
   bool get isOnline => _isOnline;
 
+  /// Number of requests waiting to be replayed.
   int get queuedRequestsCount => _queue.length;
 
   /// Checks connectivity now and replays the queue when back online.
@@ -111,6 +116,7 @@ class OfflineMode extends HtpioMiddleware {
     }
   }
 
+  /// Drops all queued requests.
   void clearQueue() => _queue.clear();
 
   /// Replays queued requests now if online.
@@ -118,6 +124,7 @@ class OfflineMode extends HtpioMiddleware {
     if (_isOnline) await _flushQueue();
   }
 
+  /// Stops checking connectivity and closes the streams.
   void dispose() {
     _timer?.cancel();
     _connectivity.close();
