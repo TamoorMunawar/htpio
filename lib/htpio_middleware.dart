@@ -25,8 +25,10 @@ abstract class HtpioMiddleware {
   /// The client this middleware was added to. Set by `HtpioClient.use`.
   HtpioClient? client;
 
+  /// Called before each request is sent. Throw to stop the request.
   Future<void> beforeRequest(HtpioRequest request) async {}
 
+  /// Called after each successful response.
   Future<void> afterResponse(HtpioResponse response) async {}
 
   /// Called once a request has finally failed (after interceptors).

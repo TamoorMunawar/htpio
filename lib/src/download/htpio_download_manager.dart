@@ -18,6 +18,8 @@ import '../platform/platform.dart';
 /// );
 /// ```
 class HtpioDownloadManager {
+  /// Creates a download manager. Pass [httpClient] to use your own client
+  /// (it is not closed by [dispose]).
   HtpioDownloadManager({http.Client? httpClient})
       : _http = httpClient ?? http.Client(),
         _ownsClient = httpClient == null;
@@ -116,6 +118,7 @@ class HtpioDownloadManager {
   /// Pauses receiving data. The connection stays open.
   void pauseDownload(String url) => _tasks[url]?.subscription?.pause();
 
+  /// Continues a paused download.
   void resumeDownload(String url) => _tasks[url]?.subscription?.resume();
 
   /// Stops the download; `downloadFile` throws an `HtpioError` of type
@@ -125,6 +128,7 @@ class HtpioDownloadManager {
   /// Progress from 0.0 to 1.0, or `null` when [url] is not downloading.
   double? getProgress(String url) => _tasks[url]?.progress;
 
+  /// Whether [url] is downloading right now.
   bool isDownloading(String url) => _tasks.containsKey(url);
 
   /// Cancels all downloads and releases resources.
@@ -163,6 +167,7 @@ class _DownloadTask {
 
 /// Progress event emitted by [HtpioDownloadManager.progressStream].
 class DownloadProgress {
+  /// Creates a progress event.
   DownloadProgress({
     required this.url,
     required this.progress,
@@ -170,10 +175,13 @@ class DownloadProgress {
     required this.totalBytes,
   });
 
+  /// The URL being downloaded.
   final String url;
 
   /// 0.0 to 1.0. Stays 0 when the server sends no `Content-Length`.
   final double progress;
+
+  /// Bytes received so far.
   final int downloadedBytes;
 
   /// Total size in bytes, or -1 when unknown.

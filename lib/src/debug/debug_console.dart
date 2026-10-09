@@ -15,14 +15,17 @@ class DebugConsole {
   static final List<String> _logs = [];
   static final ValueNotifier<int> _version = ValueNotifier(0);
 
+  /// Adds a line to the log.
   void log(String message) {
     _logs.add('🧪 $message');
     if (_logs.length > maxLogs) _logs.removeRange(0, _logs.length - maxLogs);
     _version.value++;
   }
 
+  /// All kept log lines, oldest first.
   List<String> getLogs() => List.unmodifiable(_logs);
 
+  /// Removes all log lines.
   void clear() {
     _logs.clear();
     _version.value++;

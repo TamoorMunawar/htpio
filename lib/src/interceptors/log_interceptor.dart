@@ -11,6 +11,8 @@ import 'interceptor.dart';
 /// htpio.addInterceptor(HtpioLogInterceptor(responseBody: true));
 /// ```
 class HtpioLogInterceptor extends HtpioInterceptor {
+  /// Creates a logger. Only the request line and status are printed unless
+  /// you enable more.
   HtpioLogInterceptor({
     this.requestHeaders = false,
     this.requestBody = false,
@@ -20,9 +22,16 @@ class HtpioLogInterceptor extends HtpioInterceptor {
     this.hiddenHeaders = const {'authorization', 'cookie', 'set-cookie'},
   });
 
+  /// Print request headers.
   final bool requestHeaders;
+
+  /// Print the request body.
   final bool requestBody;
+
+  /// Print response headers.
   final bool responseHeaders;
+
+  /// Print the response body.
   final bool responseBody;
 
   /// Where log lines go. Defaults to `dart:developer` `log`.

@@ -31,6 +31,7 @@ import 'src/platform/platform.dart';
 /// Create one client and reuse it: it keeps connections alive between
 /// requests. Call [close] when you no longer need it.
 class HtpioClient {
+  /// Creates a client. Every argument is optional; see the fields below.
   HtpioClient({
     this.baseUrl = '',
     Map<String, String>? headers,
@@ -688,6 +689,7 @@ class HtpioClient {
         if (authToken != null) 'Authorization': 'Bearer $authToken',
       };
 
+  /// Legacy GET. Use [get] instead.
   @Deprecated('Use get(path, fromJson: ...). Will be removed in 2.0.0.')
   Future<HtpioResponse<T>> getRequest<T>({
     required String endpoint,
@@ -700,6 +702,8 @@ class HtpioClient {
 
   @Deprecated(
       'Use post(path, data: ..., fromJson: ...). Will be removed in 2.0.0.')
+
+  /// Legacy POST. Use [post] instead.
   Future<HtpioResponse<T>> postRequest<T>({
     required String endpoint,
     required dynamic data,
@@ -716,6 +720,8 @@ class HtpioClient {
 
   @Deprecated(
       'Use put(path, data: ..., fromJson: ...). Will be removed in 2.0.0.')
+
+  /// Legacy PUT. Use [put] instead.
   Future<HtpioResponse<T>> putRequest<T>({
     required String endpoint,
     required dynamic data,
@@ -730,6 +736,7 @@ class HtpioClient {
     );
   }
 
+  /// Legacy DELETE. Use [delete] instead.
   @Deprecated('Use delete(path, fromJson: ...). Will be removed in 2.0.0.')
   Future<HtpioResponse<T>> deleteRequest<T>({
     required String endpoint,
@@ -742,6 +749,8 @@ class HtpioClient {
 
   @Deprecated(
       'Use post(path, data: FormData.fromMap({...})). Will be removed in 2.0.0.')
+
+  /// Legacy multi-file upload. Use [post] with [FormData] instead.
   Future<HtpioResponse<T>> postFilesWithDataRequest<T>({
     required String endpoint,
     required String fileJsonKey,
@@ -761,6 +770,8 @@ class HtpioClient {
 
   @Deprecated(
       'Use post(path, data: FormData.fromMap({...})). Will be removed in 2.0.0.')
+
+  /// Legacy single-file upload. Use [post] with [FormData] instead.
   Future<HtpioResponse<T>> postSingleFileWithDataRequest<T>({
     required String endpoint,
     required String fileJsonKey,

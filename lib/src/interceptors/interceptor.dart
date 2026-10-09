@@ -24,10 +24,14 @@ abstract class HtpioInterceptor {
   /// `HtpioClient.addInterceptor`; use it to re-send a request.
   HtpioClient? client;
 
+  /// Called before the request is sent. Change and return [request].
   Future<HtpioRequest> onRequest(HtpioRequest request) async => request;
 
+  /// Called with each successful response. Change and return [response].
   Future<HtpioResponse> onResponse(HtpioResponse response) async => response;
 
+  /// Called when the request fails. Return a response to recover, or throw
+  /// to pass the error on.
   Future<HtpioResponse> onError(HtpioError error, HtpioRequest request) async =>
       throw error;
 }

@@ -17,6 +17,7 @@ import 'interceptor.dart';
 /// htpio.addInterceptor(RetryInterceptor(maxRetries: 3));
 /// ```
 class RetryInterceptor extends HtpioInterceptor {
+  /// Creates a retry interceptor with sensible defaults.
   RetryInterceptor({
     this.maxRetries = 3,
     this.baseDelay = const Duration(seconds: 1),
@@ -26,14 +27,17 @@ class RetryInterceptor extends HtpioInterceptor {
     this.retryIf,
   });
 
+  /// How many times a request is retried after the first failure.
   final int maxRetries;
 
   /// Wait before the first retry. Doubles each attempt when
   /// [useExponentialBackoff] is `true`.
   final Duration baseDelay;
 
+  /// Double the delay after each attempt (with a little random jitter).
   final bool useExponentialBackoff;
 
+  /// Status codes worth retrying.
   final List<int> retryableStatusCodes;
 
   /// HTTP methods that may be retried. Add `'POST'` only for idempotent APIs.

@@ -20,6 +20,8 @@ import 'interceptor.dart';
 /// auth.clearToken();       // after logout
 /// ```
 class AuthTokenInterceptor extends HtpioInterceptor {
+  /// Creates the interceptor. The header is `[headerName]: [tokenPrefix] <token>`,
+  /// by default `Authorization: Bearer <token>`.
   AuthTokenInterceptor({
     String? token,
     String headerName = 'Authorization',
@@ -43,15 +45,19 @@ class AuthTokenInterceptor extends HtpioInterceptor {
   /// `null` to give up (the original error is thrown).
   final Future<String?> Function()? onRefreshToken;
 
+  /// Status codes that trigger [onRefreshToken]. Defaults to `[401]`.
   final List<int> refreshStatusCodes;
 
   static const _retriedKey = 'htpio_auth_retried';
   Future<String?>? _refreshing;
 
+  /// The current token, or `null`.
   String? get token => _token;
 
+  /// Sets the token used for the next requests (e.g. after login).
   void setToken(String? token) => _token = token;
 
+  /// Removes the token (e.g. after logout).
   void clearToken() => _token = null;
 
   @override

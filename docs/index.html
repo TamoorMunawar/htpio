@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Documentation for htpio, the easy HTTP client for Flutter and Dart.">
+</head>
+<body>
+
+<title>htpio Documentation</title>
+<style>
+/* Layout: sticky index on the left, one reading column on the right.
+   Signatures sit in a quiet panel; examples are dark terminal-style panels. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #131a26;
+  --muted: #586174;
+  --line: #dde2ea;
+  --accent: #1f56d6;
+  --accent-soft: #e6edfc;
+  --code-bg: #111827;
+  --code-ink: #e6e9ef;
+  --code-line: #273145;
+  --out-bg: #f0f3f7;
+  --hl-k: #c792ea; --hl-t: #7dd3fc; --hl-s: #a5d6a7; --hl-c: #7b869a; --hl-f: #ffd580; --hl-n: #f9a87b; --hl-a: #f48fb1;
+  --get: #0d7f57; --post: #1f56d6; --put: #9a5b00; --patch: #6d45c9; --delete: #b8322b; --head: #4b5568; --any: #4b5568;
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --step--1: .8125rem; --step-0: 1rem; --step-1: 1.25rem; --step-2: 1.6rem; --step-3: 2.4rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1018; --surface: #121826; --ink: #e7eaf0; --muted: #98a2b5; --line: #232c3d;
+    --accent: #8cb0ff; --accent-soft: #18233a; --code-bg: #0a0e15; --code-ink: #e6e9ef; --code-line: #1c2433;
+    --out-bg: #151c2a;
+    --get: #4fd1a1; --post: #8cb0ff; --put: #f2b45c; --patch: #b79cff; --delete: #ff8a80; --head: #a3adbf; --any: #a3adbf;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1018; --surface: #121826; --ink: #e7eaf0; --muted: #98a2b5; --line: #232c3d;
+  --accent: #8cb0ff; --accent-soft: #18233a; --code-bg: #0a0e15; --code-ink: #e6e9ef; --code-line: #1c2433;
+  --out-bg: #151c2a;
+  --get: #4fd1a1; --post: #8cb0ff; --put: #f2b45c; --patch: #b79cff; --delete: #ff8a80; --head: #a3adbf; --any: #a3adbf;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { background: var(--bg); color: var(--ink); font: 400 var(--step-0)/1.65 var(--font-body); margin: 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-mono); font-size: .88em; }
+p code, td code, li code { background: var(--accent-soft); padding: .1em .35em; border-radius: 4px; }
+
+.shell-wrap { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 48px; max-width: 1240px; margin: 0 auto; padding-inline: 24px; }
+
+/* Sidebar index */
+.side { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100vh; overflow-y: auto; padding-block: 28px 40px; }
+.brand { display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand b { font: 700 1.5rem/1 var(--font-display); letter-spacing: -.02em; }
+.brand span { font: 500 var(--step--1) var(--font-mono); color: var(--muted); }
+.search { margin-block: 18px 14px; }
+.search label { display: block; font-size: var(--step--1); color: var(--muted); margin-bottom: 4px; }
+.search input { width: 100%; font: inherit; font-size: .95rem; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.side ul { list-style: none; margin: 0; padding: 0; }
+.group { margin-top: 14px; }
+.gtitle { display: block; font: 600 var(--step--1)/1.4 var(--font-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); text-decoration: none; margin-bottom: 4px; }
+.group ul a { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 8px; margin-inline: -8px; border-radius: 6px; color: var(--ink); text-decoration: none; font-size: .93rem; }
+.group ul a:hover { background: var(--accent-soft); }
+.group ul a.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.empty { color: var(--muted); font-size: .9rem; margin-top: 12px; }
+.mobile-nav { display: none; }
+
+/* Main column */
+main { min-width: 0; padding-block: 28px 96px; }
+.hero { padding-block: 20px 36px; border-bottom: 1px solid var(--line); }
+.hero .eyebrow { font: 500 var(--step--1) var(--font-mono); color: var(--muted); margin: 0; }
+.hero h1 { font: 700 var(--step-3)/1.08 var(--font-display); letter-spacing: -.03em; margin: 10px 0 12px; text-wrap: balance; }
+.hero p.lede { font-size: 1.12rem; max-width: 62ch; margin: 0 0 20px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.chips li { font-size: var(--step--1); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--surface); }
+.quick { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 5fr); align-items: start; gap: 16px; margin-top: 26px; }
+.quick figure { margin: 0; }
+.quick > * { min-width: 0; }
+.verbs { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+
+section.group-sec { padding-top: 40px; }
+section.group-sec > h2 { font: 700 var(--step-2)/1.2 var(--font-display); letter-spacing: -.02em; margin: 0 0 4px; text-wrap: balance; }
+.item { padding-block: 26px; border-bottom: 1px solid var(--line); max-width: 860px; }
+.item:last-child { border-bottom: 0; }
+.item > p { max-width: 70ch; margin: 12px 0; }
+.item h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font: 600 var(--step-1)/1.3 var(--font-mono); margin: 0; letter-spacing: -.01em; }
+.anchor { color: var(--ink); text-decoration: none; }
+.anchor:hover { color: var(--accent); }
+.kind { font: 500 .72rem/1 var(--font-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; }
+.verb { font: 700 .72rem/1 var(--font-mono); letter-spacing: .04em; padding: 5px 7px; border-radius: 5px; color: var(--surface); }
+.v-get { background: var(--get); color: var(--get); } .verb.v-get { color: var(--surface); }
+.v-post { background: var(--post); color: var(--post); } .verb.v-post { color: var(--surface); }
+.v-put { background: var(--put); color: var(--put); } .verb.v-put { color: var(--surface); }
+.v-patch { background: var(--patch); color: var(--patch); } .verb.v-patch { color: var(--surface); }
+.v-delete { background: var(--delete); color: var(--delete); } .verb.v-delete { color: var(--surface); }
+.v-head, .v-any { background: var(--head); color: var(--head); } .verb.v-head, .verb.v-any { color: var(--surface); }
+
+pre { margin: 0; overflow-x: auto; font: 400 .86rem/1.6 var(--font-mono); tab-size: 2; }
+.sig { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 14px; color: var(--ink); }
+.sig .k { color: var(--patch); } .sig .t { color: var(--post); } .sig .s { color: var(--get); } .sig .c { color: var(--muted); } .sig .f { color: var(--ink); font-weight: 600; } .sig .n { color: var(--put); } .sig .a { color: var(--delete); }
+figure { margin: 16px 0 0; }
+.code { background: var(--code-bg); border-radius: 10px; overflow: hidden; border: 1px solid var(--code-line); }
+.code figcaption { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px 7px 16px; border-bottom: 1px solid var(--code-line); font: 500 .72rem/1 var(--font-body); text-transform: uppercase; letter-spacing: .08em; color: var(--hl-c); }
+.code pre { padding: 14px 16px; color: var(--code-ink); }
+.code .k { color: var(--hl-k); } .code .t { color: var(--hl-t); } .code .s { color: var(--hl-s); } .code .c { color: var(--hl-c); font-style: italic; } .code .f { color: var(--hl-f); } .code .n { color: var(--hl-n); } .code .a { color: var(--hl-a); }
+.copy { font: 500 .75rem/1 var(--font-body); color: var(--code-ink); background: transparent; border: 1px solid var(--code-line); border-radius: 6px; padding: 5px 9px; cursor: pointer; }
+.copy:hover { border-color: var(--hl-c); }
+.out { border: 1px dashed var(--line); border-radius: 10px; background: var(--out-bg); }
+.out figcaption { font: 500 .72rem/1 var(--font-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 14px 0; }
+.out pre { padding: 8px 14px 12px; color: var(--ink); }
+
+.scroll { overflow-x: auto; margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th { text-align: left; font: 600 var(--step--1) var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td code.p { background: none; padding: 0; font-weight: 600; white-space: nowrap; }
+td code.ty { background: none; padding: 0; color: var(--muted); white-space: nowrap; }
+
+footer { color: var(--muted); font-size: .9rem; padding-top: 40px; }
+[hidden] { display: none !important; }
+
+@media (max-width: 900px) {
+  .shell-wrap { display: block; padding-inline: 16px; }
+  .side { display: none; }
+  .mobile-nav { display: block; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); }
+  .mobile-nav details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .mobile-nav summary { padding: 10px 14px; cursor: pointer; font-weight: 600; }
+  .mobile-nav .inner { max-height: 60vh; overflow-y: auto; padding: 0 14px 14px; }
+  .hero h1 { font-size: 1.9rem; }
+  .quick { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<div class="shell-wrap">
+  <aside class="side">
+    <a class="brand" href="#top"><b>htpio</b><span>v1.2.0</span></a>
+    <div class="search"><label for="q-side">Find a class or function</label><input id="q-side" type="search" placeholder="e.g. retry, upload, cancel" autocomplete="off"></div>
+    <nav aria-label="Documentation index"><ul><li class="group"><a class="gtitle" href="#start">Getting started</a><ul><li><a href="#install" data-name="install">Install</a></li><li><a href="#first-request" data-name="your first request">Your first request</a></li><li><a href="#typed-models" data-name="typed models">Typed models</a></li><li><a href="#api-layer" data-name="recommended app structure">Recommended app structure</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#client">HtpioClient</a><ul><li><a href="#HtpioClient" data-name="htpioclient()">HtpioClient()</a></li><li><a href="#get" data-name="get()">get()<span class="dot v-get" aria-hidden="true"></span></a></li><li><a href="#post" data-name="post()">post()<span class="dot v-post" aria-hidden="true"></span></a></li><li><a href="#put" data-name="put()">put()<span class="dot v-put" aria-hidden="true"></span></a></li><li><a href="#patch" data-name="patch()">patch()<span class="dot v-patch" aria-hidden="true"></span></a></li><li><a href="#delete" data-name="delete()">delete()<span class="dot v-delete" aria-hidden="true"></span></a></li><li><a href="#head" data-name="head()">head()<span class="dot v-head" aria-hidden="true"></span></a></li><li><a href="#request" data-name="request()">request()<span class="dot v-any" aria-hidden="true"></span></a></li><li><a href="#send" data-name="send()">send()</a></li><li><a href="#addInterceptor" data-name="addinterceptor() / removeinterceptor()">addInterceptor() / removeInterceptor()</a></li><li><a href="#use" data-name="use()">use()</a></li><li><a href="#close" data-name="close()">close()</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#data">Sending data</a><ul><li><a href="#encoding" data-name="how data is encoded">How data is encoded</a></li><li><a href="#FormData" data-name="formdata">FormData</a></li><li><a href="#HtpioMultipartFile" data-name="htpiomultipartfile">HtpioMultipartFile</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#responses">Responses</a><ul><li><a href="#HtpioResponse" data-name="htpioresponse&lt;t&gt;">HtpioResponse&lt;T&gt;</a></li><li><a href="#ResponseType" data-name="responsetype">ResponseType</a></li><li><a href="#fromJson-decoder" data-name="fromjson vs decoder">fromJson vs decoder</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#errors">Errors</a><ul><li><a href="#HtpioError" data-name="htpioerror">HtpioError</a></li><li><a href="#HtpioErrorType" data-name="htpioerrortype">HtpioErrorType</a></li><li><a href="#validateStatus" data-name="validatestatus">validateStatus</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#cancel">Cancel & timeout</a><ul><li><a href="#CancelToken" data-name="canceltoken">CancelToken</a></li><li><a href="#search-as-you-type" data-name="recipe: search as you type">Recipe: search as you type</a></li><li><a href="#timeout" data-name="timeouts">Timeouts</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#interceptors">Interceptors</a><ul><li><a href="#HtpioInterceptor" data-name="htpiointerceptor">HtpioInterceptor</a></li><li><a href="#AuthTokenInterceptor" data-name="authtokeninterceptor">AuthTokenInterceptor</a></li><li><a href="#RetryInterceptor" data-name="retryinterceptor">RetryInterceptor</a></li><li><a href="#HtpioLogInterceptor" data-name="htpiologinterceptor">HtpioLogInterceptor</a></li><li><a href="#HtpioMiddleware" data-name="htpiomiddleware">HtpioMiddleware</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#offline">Cache & offline</a><ul><li><a href="#HtpioCache" data-name="htpiocache">HtpioCache</a></li><li><a href="#OfflineMode" data-name="offlinemode">OfflineMode</a></li><li><a href="#ConnectivityHelper" data-name="connectivityhelper">ConnectivityHelper</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#downloads">Downloads</a><ul><li><a href="#HtpioDownloadManager" data-name="htpiodownloadmanager">HtpioDownloadManager</a></li><li><a href="#DownloadProgress" data-name="downloadprogress">DownloadProgress</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#testing">Mocking & testing</a><ul><li><a href="#MockServer" data-name="mockserver">MockServer</a></li><li><a href="#MockResponse" data-name="mockresponse">MockResponse</a></li><li><a href="#unit-tests" data-name="unit tests with mockclient">Unit tests with MockClient</a></li><li><a href="#DebugConsole" data-name="debugconsole">DebugConsole</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#reference">Reference</a><ul><li><a href="#HtpioRequest" data-name="htpiorequest&lt;t&gt;">HtpioRequest&lt;T&gt;</a></li><li><a href="#platforms" data-name="platform support">Platform support</a></li><li><a href="#migration" data-name="upgrading from 1.1.x">Upgrading from 1.1.x</a></li></ul></li></ul></nav>
+    <p class="empty" hidden>Nothing matches. Try another word.</p>
+  </aside>
+  <main id="top">
+    <div class="mobile-nav">
+      <details><summary>Contents (45 topics)</summary><div class="inner">
+        <div class="search"><label for="q-mobile">Find a class or function</label><input id="q-mobile" type="search" placeholder="e.g. retry, upload, cancel" autocomplete="off"></div>
+        <nav aria-label="Documentation index (mobile)"><ul><li class="group"><a class="gtitle" href="#start">Getting started</a><ul><li><a href="#install" data-name="install">Install</a></li><li><a href="#first-request" data-name="your first request">Your first request</a></li><li><a href="#typed-models" data-name="typed models">Typed models</a></li><li><a href="#api-layer" data-name="recommended app structure">Recommended app structure</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#client">HtpioClient</a><ul><li><a href="#HtpioClient" data-name="htpioclient()">HtpioClient()</a></li><li><a href="#get" data-name="get()">get()<span class="dot v-get" aria-hidden="true"></span></a></li><li><a href="#post" data-name="post()">post()<span class="dot v-post" aria-hidden="true"></span></a></li><li><a href="#put" data-name="put()">put()<span class="dot v-put" aria-hidden="true"></span></a></li><li><a href="#patch" data-name="patch()">patch()<span class="dot v-patch" aria-hidden="true"></span></a></li><li><a href="#delete" data-name="delete()">delete()<span class="dot v-delete" aria-hidden="true"></span></a></li><li><a href="#head" data-name="head()">head()<span class="dot v-head" aria-hidden="true"></span></a></li><li><a href="#request" data-name="request()">request()<span class="dot v-any" aria-hidden="true"></span></a></li><li><a href="#send" data-name="send()">send()</a></li><li><a href="#addInterceptor" data-name="addinterceptor() / removeinterceptor()">addInterceptor() / removeInterceptor()</a></li><li><a href="#use" data-name="use()">use()</a></li><li><a href="#close" data-name="close()">close()</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#data">Sending data</a><ul><li><a href="#encoding" data-name="how data is encoded">How data is encoded</a></li><li><a href="#FormData" data-name="formdata">FormData</a></li><li><a href="#HtpioMultipartFile" data-name="htpiomultipartfile">HtpioMultipartFile</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#responses">Responses</a><ul><li><a href="#HtpioResponse" data-name="htpioresponse&lt;t&gt;">HtpioResponse&lt;T&gt;</a></li><li><a href="#ResponseType" data-name="responsetype">ResponseType</a></li><li><a href="#fromJson-decoder" data-name="fromjson vs decoder">fromJson vs decoder</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#errors">Errors</a><ul><li><a href="#HtpioError" data-name="htpioerror">HtpioError</a></li><li><a href="#HtpioErrorType" data-name="htpioerrortype">HtpioErrorType</a></li><li><a href="#validateStatus" data-name="validatestatus">validateStatus</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#cancel">Cancel & timeout</a><ul><li><a href="#CancelToken" data-name="canceltoken">CancelToken</a></li><li><a href="#search-as-you-type" data-name="recipe: search as you type">Recipe: search as you type</a></li><li><a href="#timeout" data-name="timeouts">Timeouts</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#interceptors">Interceptors</a><ul><li><a href="#HtpioInterceptor" data-name="htpiointerceptor">HtpioInterceptor</a></li><li><a href="#AuthTokenInterceptor" data-name="authtokeninterceptor">AuthTokenInterceptor</a></li><li><a href="#RetryInterceptor" data-name="retryinterceptor">RetryInterceptor</a></li><li><a href="#HtpioLogInterceptor" data-name="htpiologinterceptor">HtpioLogInterceptor</a></li><li><a href="#HtpioMiddleware" data-name="htpiomiddleware">HtpioMiddleware</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#offline">Cache & offline</a><ul><li><a href="#HtpioCache" data-name="htpiocache">HtpioCache</a></li><li><a href="#OfflineMode" data-name="offlinemode">OfflineMode</a></li><li><a href="#ConnectivityHelper" data-name="connectivityhelper">ConnectivityHelper</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#downloads">Downloads</a><ul><li><a href="#HtpioDownloadManager" data-name="htpiodownloadmanager">HtpioDownloadManager</a></li><li><a href="#DownloadProgress" data-name="downloadprogress">DownloadProgress</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#testing">Mocking & testing</a><ul><li><a href="#MockServer" data-name="mockserver">MockServer</a></li><li><a href="#MockResponse" data-name="mockresponse">MockResponse</a></li><li><a href="#unit-tests" data-name="unit tests with mockclient">Unit tests with MockClient</a></li><li><a href="#DebugConsole" data-name="debugconsole">DebugConsole</a></li></ul></li>
+<li class="group"><a class="gtitle" href="#reference">Reference</a><ul><li><a href="#HtpioRequest" data-name="htpiorequest&lt;t&gt;">HtpioRequest&lt;T&gt;</a></li><li><a href="#platforms" data-name="platform support">Platform support</a></li><li><a href="#migration" data-name="upgrading from 1.1.x">Upgrading from 1.1.x</a></li></ul></li></ul></nav>
+        <p class="empty" hidden>Nothing matches. Try another word.</p>
+      </div></details>
+    </div>
+    <header class="hero">
+      <p class="eyebrow">package:htpio · v1.2.0 · MIT</p>
+      <h1>The easy HTTP client for Flutter</h1>
+      <p class="lede">Simple requests, typed JSON, interceptors, retry, token refresh, caching, an offline queue, uploads, downloads and mocking, all in one package. Every class and function is on this page with an example you can copy.</p>
+      <ul class="chips" aria-label="Supported platforms"><li>Android</li><li>iOS</li><li>Web</li><li>macOS</li><li>Windows</li><li>Linux</li><li>WASM</li></ul>
+      <div class="quick">
+        <figure class="code shell"><figcaption><span>1 · Install</span><button type="button" class="copy" aria-label="Copy command">Copy</button></figcaption><pre><code>flutter pub add htpio</code></pre></figure>
+        <figure class="code"><figcaption><span>2 · Use</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> htpio = <span class="t">HtpioClient</span>(baseUrl: <span class="s">&#x27;https://api.example.com&#x27;</span>);
+
+<span class="k">final</span> res  = <span class="k">await</span> htpio.<span class="k">get</span>(<span class="s">&#x27;/users/1&#x27;</span>);
+<span class="k">final</span> user = <span class="k">await</span> htpio.<span class="k">get</span>&lt;<span class="t">User</span>&gt;(<span class="s">&#x27;/users/1&#x27;</span>, fromJson: <span class="t">User</span>.fromJson);
+<span class="k">await</span> htpio.<span class="f">post</span>(<span class="s">&#x27;/users&#x27;</span>, data: {<span class="s">&#x27;name&#x27;</span>: <span class="s">&#x27;Ada&#x27;</span>});</code></pre></figure>
+      </div>
+      <div class="verbs" aria-label="HTTP methods">
+        <a class="verb v-get" href="#get">GET</a><a class="verb v-post" href="#post">POST</a><a class="verb v-put" href="#put">PUT</a><a class="verb v-patch" href="#patch">PATCH</a><a class="verb v-delete" href="#delete">DELETE</a><a class="verb v-head" href="#head">HEAD</a>
+      </div>
+    </header>
+    <section class="group-sec" id="start"><h2>Getting started</h2><article class="item" id="install" data-name="install">
+<h3><a class="anchor" href="#install">Install</a></h3>
+<p>Add htpio to your Flutter app, then import it. One import gives you everything.</p>
+<figure class="code shell"><figcaption><span>Terminal</span><button type="button" class="copy" aria-label="Copy command">Copy</button></figcaption><pre><code>flutter pub add htpio</code></pre></figure>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">import</span> <span class="s">&#x27;package:htpio/htpio.dart&#x27;</span>;</code></pre></figure>
+</article>
+<article class="item" id="first-request" data-name="your first request">
+<h3><a class="anchor" href="#first-request">Your first request</a></h3>
+<p>Create one client for your whole app and reuse it. It keeps connections open, which makes later requests faster.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> htpio = <span class="t">HtpioClient</span>(baseUrl: <span class="s">&#x27;https://api.example.com&#x27;</span>);
+
+<span class="k">final</span> res = <span class="k">await</span> htpio.<span class="k">get</span>(<span class="s">&#x27;/users/1&#x27;</span>);
+<span class="f">print</span>(res.statusCode);     <span class="c">// 200</span>
+<span class="f">print</span>(res.data);           <span class="c">// {id: 1, name: Ada Lovelace}</span>
+<span class="f">print</span>(res.data[<span class="s">&#x27;name&#x27;</span>]);   <span class="c">// Ada Lovelace</span></code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>200
+{id: 1, name: Ada Lovelace}
+Ada Lovelace</pre></figure>
+</article>
+<article class="item" id="typed-models" data-name="typed models">
+<h3><a class="anchor" href="#typed-models">Typed models</a></h3>
+<p>Give htpio your model’s <code>fromJson</code> and <code>res.data</code> becomes that model.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">class</span> <span class="t">User</span> {
+  <span class="t">User</span>({<span class="k">required</span> <span class="k">this</span>.id, <span class="k">required</span> <span class="k">this</span>.name});
+
+  <span class="k">factory</span> <span class="t">User</span>.<span class="f">fromJson</span>(<span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt; json) =&gt;
+      <span class="t">User</span>(id: json[<span class="s">&#x27;id&#x27;</span>] <span class="k">as</span> int, name: json[<span class="s">&#x27;name&#x27;</span>] <span class="k">as</span> <span class="t">String</span>);
+
+  <span class="k">final</span> int id;
+  <span class="k">final</span> <span class="t">String</span> name;
+}</code></pre></figure>
+<figure class="code"><figcaption><span>Usage</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> res = <span class="k">await</span> htpio.<span class="k">get</span>&lt;<span class="t">User</span>&gt;(<span class="s">&#x27;/users/1&#x27;</span>, fromJson: <span class="t">User</span>.fromJson);
+<span class="f">print</span>(res.data.name); <span class="c">// Ada Lovelace</span></code></pre></figure>
+</article>
+<article class="item" id="api-layer" data-name="recommended app structure">
+<h3><a class="anchor" href="#api-layer">Recommended app structure</a></h3>
+<p>Keep one client in a single file and put each endpoint in an API class. Widgets call the API class and never build URLs themselves.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="c">// lib/api/client.dart</span>
+<span class="k">final</span> api = <span class="t">HtpioClient</span>(
+  baseUrl: <span class="s">&#x27;https://api.example.com/v1&#x27;</span>,
+  timeout: <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">20</span>),
+  interceptors: [
+    <span class="t">AuthTokenInterceptor</span>(tokenProvider: () =&gt; secureStorage.<span class="f">read</span>(<span class="s">&#x27;token&#x27;</span>)),
+    <span class="t">RetryInterceptor</span>(),
+    <span class="k">if</span> (kDebugMode) <span class="t">HtpioLogInterceptor</span>(responseBody: <span class="k">true</span>),
+  ],
+);
+
+<span class="c">// lib/api/user_api.dart</span>
+<span class="k">class</span> <span class="t">UserApi</span> {
+  <span class="t">Future</span>&lt;<span class="t">User</span>&gt; <span class="f">me</span>() <span class="k">async</span> =&gt;
+      (<span class="k">await</span> api.<span class="k">get</span>&lt;<span class="t">User</span>&gt;(<span class="s">&#x27;/me&#x27;</span>, fromJson: <span class="t">User</span>.fromJson)).data;
+
+  <span class="t">Future</span>&lt;<span class="t">List</span>&lt;<span class="t">User</span>&gt;&gt; <span class="f">search</span>(<span class="t">String</span> q, {<span class="t">CancelToken</span>? cancelToken}) <span class="k">async</span> {
+    <span class="k">final</span> res = <span class="k">await</span> api.<span class="k">get</span>&lt;<span class="t">List</span>&lt;<span class="t">User</span>&gt;&gt;(
+      <span class="s">&#x27;/users&#x27;</span>,
+      queryParameters: {<span class="s">&#x27;q&#x27;</span>: q},
+      cancelToken: cancelToken,
+      decoder: (data) =&gt; [<span class="k">for</span> (<span class="k">final</span> e <span class="k">in</span> data <span class="k">as</span> <span class="t">List</span>) <span class="t">User</span>.<span class="f">fromJson</span>(e)],
+    );
+    <span class="k">return</span> res.data;
+  }
+
+  <span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">rename</span>(int id, <span class="t">String</span> name) =&gt;
+      api.<span class="f">patch</span>(<span class="s">&#x27;/users/$id&#x27;</span>, data: {<span class="s">&#x27;name&#x27;</span>: name});
+}</code></pre></figure>
+</article></section>
+<section class="group-sec" id="client"><h2>HtpioClient</h2><article class="item" id="HtpioClient" data-name="htpioclient()">
+<h3><a class="anchor" href="#HtpioClient">HtpioClient()</a><span class="kind">constructor</span></h3>
+<pre class="sig"><code><span class="t">HtpioClient</span>({
+  <span class="t">String</span> baseUrl = <span class="s">&#x27;&#x27;</span>,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt;? headers,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? queryParameters,
+  <span class="t">Duration</span>? timeout,
+  bool <span class="t">Function</span>(int statusCode)? validateStatus,
+  http.<span class="t">Client</span>? httpClient,
+  <span class="t">HtpioCache</span>? cache,
+  <span class="t">MockServer</span>? mockServer,
+  <span class="t">List</span>&lt;<span class="t">HtpioInterceptor</span>&gt;? interceptors,
+})</code></pre>
+<p>Creates the client. Every argument is optional.</p>
+<div class="scroll"><table class="params"><thead><tr><th>Parameter</th><th>Type</th><th>What it does</th></tr></thead><tbody><tr><td><code class="p">baseUrl</code></td><td><code class="ty">String</code></td><td>Joined to relative paths. <code>'/users'</code> becomes <code>baseUrl + '/users'</code>. Full URLs are used as is.</td></tr><tr><td><code class="p">headers</code></td><td><code class="ty">Map&lt;String, String&gt;</code></td><td>Sent with every request. Per-request headers win.</td></tr><tr><td><code class="p">queryParameters</code></td><td><code class="ty">Map&lt;String, dynamic&gt;</code></td><td>Added to every request URL.</td></tr><tr><td><code class="p">timeout</code></td><td><code class="ty">Duration?</code></td><td>Default time limit for a whole request. <code>null</code> means no limit.</td></tr><tr><td><code class="p">validateStatus</code></td><td><code class="ty">bool Function(int)</code></td><td>Which status codes count as success. Default: 200–299. Others throw <code>HtpioError</code>.</td></tr><tr><td><code class="p">httpClient</code></td><td><code class="ty">http.Client</code></td><td>Custom transport. Pass a <code>MockClient</code> in unit tests.</td></tr><tr><td><code class="p">cache</code></td><td><code class="ty">HtpioCache?</code></td><td>Used by requests made with <code>cache: true</code>.</td></tr><tr><td><code class="p">mockServer</code></td><td><code class="ty">MockServer?</code></td><td>When enabled, answers matching requests without the network.</td></tr><tr><td><code class="p">interceptors</code></td><td><code class="ty">List&lt;HtpioInterceptor&gt;</code></td><td>Same as calling <code>addInterceptor</code> for each.</td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> htpio = <span class="t">HtpioClient</span>(
+  baseUrl: <span class="s">&#x27;https://api.example.com/v1&#x27;</span>,
+  headers: {<span class="s">&#x27;accept-language&#x27;</span>: <span class="s">&#x27;en&#x27;</span>},
+  queryParameters: {<span class="s">&#x27;app&#x27;</span>: <span class="s">&#x27;mobile&#x27;</span>},
+  timeout: <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">20</span>),
+  interceptors: [<span class="t">RetryInterceptor</span>()],
+);
+
+<span class="c">// All of these can be changed later:</span>
+htpio.baseUrl = <span class="s">&#x27;https://staging.example.com/v1&#x27;</span>;
+htpio.headers[<span class="s">&#x27;x-app-version&#x27;</span>] = <span class="s">&#x27;2.0.0&#x27;</span>;
+htpio.timeout = <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">30</span>);</code></pre></figure>
+</article>
+<article class="item" id="get" data-name="get()">
+<h3><a class="anchor" href="#get">get()</a><span class="verb v-get">GET</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;&gt; <span class="k">get</span>&lt;<span class="t">T</span>&gt;(
+  <span class="t">String</span> path, {
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? queryParameters,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt;? headers,
+  <span class="t">T</span> <span class="t">Function</span>(<span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;)? fromJson,
+  <span class="t">T</span> <span class="t">Function</span>(<span class="k">dynamic</span> data)? decoder,
+  <span class="t">ResponseType</span> responseType = <span class="t">ResponseType</span>.json,
+  <span class="t">CancelToken</span>? cancelToken,
+  <span class="t">Duration</span>? timeout,
+  bool cache = <span class="k">false</span>,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? extra,
+})</code></pre>
+<p>Fetches data. The response body is decoded for you.</p>
+<div class="scroll"><table class="params"><thead><tr><th>Parameter</th><th>Type</th><th>What it does</th></tr></thead><tbody><tr><td><code class="p">path</code></td><td><code class="ty">String</code></td><td>Path joined to <code>baseUrl</code>, or a full URL.</td></tr><tr><td><code class="p">queryParameters</code></td><td><code class="ty">Map&lt;String, dynamic&gt;</code></td><td><code>{'page': 2}</code> → <code>?page=2</code>. A list repeats the key; <code>null</code> values are skipped.</td></tr><tr><td><code class="p">headers</code></td><td><code class="ty">Map&lt;String, String&gt;</code></td><td>Extra headers for this request only.</td></tr><tr><td><code class="p">fromJson</code></td><td><code class="ty">T Function(Map)</code></td><td>Turns a JSON object into your model.</td></tr><tr><td><code class="p">decoder</code></td><td><code class="ty">T Function(dynamic)</code></td><td>Turns any decoded body (list, string…) into <code>T</code>. Use it for lists.</td></tr><tr><td><code class="p">responseType</code></td><td><code class="ty">ResponseType</code></td><td><code>json</code> (default), <code>plain</code> for a String, <code>bytes</code> for a Uint8List.</td></tr><tr><td><code class="p">cancelToken</code></td><td><code class="ty">CancelToken?</code></td><td>Lets you cancel the request.</td></tr><tr><td><code class="p">timeout</code></td><td><code class="ty">Duration?</code></td><td>Overrides the client timeout.</td></tr><tr><td><code class="p">cache</code></td><td><code class="ty">bool</code></td><td>Serve from the client’s <code>HtpioCache</code> when possible.</td></tr><tr><td><code class="p">extra</code></td><td><code class="ty">Map&lt;String, dynamic&gt;</code></td><td>Values for your own interceptors to read.</td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="c">// JSON map</span>
+<span class="k">final</span> res = <span class="k">await</span> htpio.<span class="k">get</span>(<span class="s">&#x27;/users/1&#x27;</span>);
+<span class="f">print</span>(res.data[<span class="s">&#x27;name&#x27;</span>]);
+
+<span class="c">// Query parameters: /products?category=phones&amp;page=2&amp;tag=new&amp;tag=sale</span>
+<span class="k">await</span> htpio.<span class="k">get</span>(<span class="s">&#x27;/products&#x27;</span>, queryParameters: {
+  <span class="s">&#x27;category&#x27;</span>: <span class="s">&#x27;phones&#x27;</span>,
+  <span class="s">&#x27;page&#x27;</span>: <span class="n">2</span>,
+  <span class="s">&#x27;tag&#x27;</span>: [<span class="s">&#x27;new&#x27;</span>, <span class="s">&#x27;sale&#x27;</span>],
+});
+
+<span class="c">// Typed model</span>
+<span class="k">final</span> user = <span class="k">await</span> htpio.<span class="k">get</span>&lt;<span class="t">User</span>&gt;(<span class="s">&#x27;/users/1&#x27;</span>, fromJson: <span class="t">User</span>.fromJson);
+
+<span class="c">// Typed list</span>
+<span class="k">final</span> users = <span class="k">await</span> htpio.<span class="k">get</span>&lt;<span class="t">List</span>&lt;<span class="t">User</span>&gt;&gt;(
+  <span class="s">&#x27;/users&#x27;</span>,
+  decoder: (data) =&gt; [<span class="k">for</span> (<span class="k">final</span> e <span class="k">in</span> data <span class="k">as</span> <span class="t">List</span>) <span class="t">User</span>.<span class="f">fromJson</span>(e)],
+);</code></pre></figure>
+</article>
+<article class="item" id="post" data-name="post()">
+<h3><a class="anchor" href="#post">post()</a><span class="verb v-post">POST</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;&gt; <span class="f">post</span>&lt;<span class="t">T</span>&gt;(
+  <span class="t">String</span> path, {
+  <span class="t">Object</span>? data,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? queryParameters,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt;? headers,
+  <span class="t">T</span> <span class="t">Function</span>(<span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;)? fromJson,
+  <span class="t">T</span> <span class="t">Function</span>(<span class="k">dynamic</span> data)? decoder,
+  <span class="t">ResponseType</span> responseType = <span class="t">ResponseType</span>.json,
+  <span class="t">CancelToken</span>? cancelToken,
+  <span class="t">Duration</span>? timeout,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? extra,
+})</code></pre>
+<p>Creates something. <code>data</code> is encoded from its type: a Map becomes JSON, <code>FormData</code> becomes a file upload. See <a href="#encoding">Sending data</a>. The other parameters work as in <a href="#get">get()</a>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> res = <span class="k">await</span> htpio.<span class="f">post</span>(
+  <span class="s">&#x27;/users&#x27;</span>,
+  data: {<span class="s">&#x27;name&#x27;</span>: <span class="s">&#x27;Grace&#x27;</span>, <span class="s">&#x27;email&#x27;</span>: <span class="s">&#x27;grace@example.com&#x27;</span>},
+);
+<span class="f">print</span>(<span class="s">&#x27;${res.statusCode} ${res.data}&#x27;</span>);</code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>201 {id: 2, name: Grace, email: grace@example.com}</pre></figure>
+</article>
+<article class="item" id="put" data-name="put()">
+<h3><a class="anchor" href="#put">put()</a><span class="verb v-put">PUT</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;&gt; <span class="f">put</span>&lt;<span class="t">T</span>&gt;(<span class="t">String</span> path, {<span class="t">Object</span>? data, ...})</code></pre>
+<p>Replaces a resource. Same parameters as <a href="#post">post()</a>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">await</span> htpio.<span class="f">put</span>(<span class="s">&#x27;/users/2&#x27;</span>, data: {<span class="s">&#x27;name&#x27;</span>: <span class="s">&#x27;Grace Hopper&#x27;</span>, <span class="s">&#x27;email&#x27;</span>: <span class="s">&#x27;g@example.com&#x27;</span>});</code></pre></figure>
+</article>
+<article class="item" id="patch" data-name="patch()">
+<h3><a class="anchor" href="#patch">patch()</a><span class="verb v-patch">PATCH</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;&gt; <span class="f">patch</span>&lt;<span class="t">T</span>&gt;(<span class="t">String</span> path, {<span class="t">Object</span>? data, ...})</code></pre>
+<p>Changes part of a resource. Same parameters as <a href="#post">post()</a>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">await</span> htpio.<span class="f">patch</span>(<span class="s">&#x27;/users/2&#x27;</span>, data: {<span class="s">&#x27;name&#x27;</span>: <span class="s">&#x27;Rear Admiral Hopper&#x27;</span>});</code></pre></figure>
+</article>
+<article class="item" id="delete" data-name="delete()">
+<h3><a class="anchor" href="#delete">delete()</a><span class="verb v-delete">DELETE</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;&gt; <span class="f">delete</span>&lt;<span class="t">T</span>&gt;(<span class="t">String</span> path, {<span class="t">Object</span>? data, ...})</code></pre>
+<p>Deletes a resource. A body is optional. Same parameters as <a href="#post">post()</a>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> res = <span class="k">await</span> htpio.<span class="f">delete</span>(<span class="s">&#x27;/users/2&#x27;</span>);
+<span class="f">print</span>(res.statusCode); <span class="c">// 204</span>
+<span class="f">print</span>(res.data);       <span class="c">// null (empty body)</span></code></pre></figure>
+</article>
+<article class="item" id="head" data-name="head()">
+<h3><a class="anchor" href="#head">head()</a><span class="verb v-head">HEAD</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="k">dynamic</span>&gt;&gt; <span class="f">head</span>(
+  <span class="t">String</span> path, {
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? queryParameters,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt;? headers,
+  <span class="t">CancelToken</span>? cancelToken,
+  <span class="t">Duration</span>? timeout,
+})</code></pre>
+<p>Fetches only the headers, for example to check a file’s size before downloading it.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> res = <span class="k">await</span> htpio.<span class="f">head</span>(<span class="s">&#x27;/files/video.mp4&#x27;</span>);
+<span class="f">print</span>(res.headers[<span class="s">&#x27;content-length&#x27;</span>]);</code></pre></figure>
+</article>
+<article class="item" id="request" data-name="request()">
+<h3><a class="anchor" href="#request">request()</a><span class="verb v-any">ANY</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;&gt; <span class="f">request</span>&lt;<span class="t">T</span>&gt;(
+  <span class="t">String</span> path, {
+  <span class="t">String</span> method = <span class="s">&#x27;GET&#x27;</span>,
+  <span class="t">Object</span>? data,
+  ...same <span class="k">as</span> <span class="k">get</span>()
+})</code></pre>
+<p>Sends a request with any HTTP method. All the verb methods above call this one.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> res = <span class="k">await</span> htpio.<span class="f">request</span>(<span class="s">&#x27;/users&#x27;</span>, method: <span class="s">&#x27;OPTIONS&#x27;</span>);</code></pre></figure>
+</article>
+<article class="item" id="send" data-name="send()">
+<h3><a class="anchor" href="#send">send()</a><span class="kind">method</span></h3>
+<pre class="sig"><code><span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;&gt; <span class="f">send</span>&lt;<span class="t">T</span>&gt;(<span class="t">HtpioRequest</span>&lt;<span class="t">T</span>&gt; request)</code></pre>
+<p>Sends a request object you built yourself. Interceptors use it to send a request again.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> req = <span class="t">HtpioRequest</span>&lt;<span class="t">User</span>&gt;(
+  url: <span class="s">&#x27;/users/1&#x27;</span>,
+  fromJson: <span class="t">User</span>.fromJson,
+  headers: {<span class="s">&#x27;x-trace&#x27;</span>: <span class="s">&#x27;abc&#x27;</span>},
+);
+<span class="k">final</span> res = <span class="k">await</span> htpio.<span class="f">send</span>(req);</code></pre></figure>
+</article>
+<article class="item" id="addInterceptor" data-name="addinterceptor() / removeinterceptor()">
+<h3><a class="anchor" href="#addInterceptor">addInterceptor() / removeInterceptor()</a><span class="kind">method</span></h3>
+<pre class="sig"><code><span class="k">void</span> <span class="f">addInterceptor</span>(<span class="t">HtpioInterceptor</span> interceptor)
+bool <span class="f">removeInterceptor</span>(<span class="t">HtpioInterceptor</span> interceptor)
+<span class="t">List</span>&lt;<span class="t">HtpioInterceptor</span>&gt; <span class="k">get</span> interceptors</code></pre>
+<p>Adds or removes an <a href="#HtpioInterceptor">interceptor</a>. Requests pass through interceptors in the order they were added, and responses pass through in reverse order.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> logger = <span class="t">HtpioLogInterceptor</span>();
+htpio.<span class="f">addInterceptor</span>(logger);
+<span class="f">print</span>(htpio.interceptors.length);
+htpio.<span class="f">removeInterceptor</span>(logger);</code></pre></figure>
+</article>
+<article class="item" id="use" data-name="use()">
+<h3><a class="anchor" href="#use">use()</a><span class="kind">method</span></h3>
+<pre class="sig"><code><span class="k">void</span> <span class="f">use</span>(<span class="t">HtpioMiddleware</span> middleware)</code></pre>
+<p>Adds a <a href="#HtpioMiddleware">middleware</a>, for example <a href="#OfflineMode">OfflineMode</a>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code>htpio.<span class="f">use</span>(<span class="t">OfflineMode</span>());</code></pre></figure>
+</article>
+<article class="item" id="close" data-name="close()">
+<h3><a class="anchor" href="#close">close()</a><span class="kind">method</span></h3>
+<pre class="sig"><code><span class="k">void</span> <span class="f">close</span>()</code></pre>
+<p>Closes open connections. Call it when the client is no longer needed, for example in a test’s <code>tearDown</code>. A closed client can’t send requests.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code>htpio.<span class="f">close</span>();</code></pre></figure>
+</article></section>
+<section class="group-sec" id="data"><h2>Sending data</h2><article class="item" id="encoding" data-name="how data is encoded">
+<h3><a class="anchor" href="#encoding">How data is encoded</a><span class="kind">guide</span></h3>
+<p>Pass any of these as <code>data</code>. htpio picks the encoding and sets the <code>Content-Type</code> header.</p>
+<div class="scroll"><table class="grid"><thead><tr><th>You pass</th><th>Sent as</th></tr></thead><tbody><tr><td><code>Map</code>, <code>List</code>, object with <code>toJson()</code></td><td>JSON · <code>application/json</code></td></tr><tr><td><code>FormData</code></td><td>File upload · <code>multipart/form-data</code></td></tr><tr><td><code>String</code></td><td>Text, unchanged · <code>text/plain</code> unless you set a type</td></tr><tr><td><code>List&lt;int&gt;</code> / <code>Uint8List</code></td><td>Raw bytes · <code>application/octet-stream</code></td></tr><tr><td><code>Map</code> + header <code>content-type: application/x-www-form-urlencoded</code></td><td>Form fields · <code>a=1&amp;b=2</code></td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="c">// JSON</span>
+<span class="k">await</span> htpio.<span class="f">post</span>(<span class="s">&#x27;/login&#x27;</span>, data: {<span class="s">&#x27;email&#x27;</span>: <span class="s">&#x27;a@b.com&#x27;</span>, <span class="s">&#x27;password&#x27;</span>: <span class="s">&#x27;secret&#x27;</span>});
+
+<span class="c">// Form URL-encoded (OAuth token endpoints often need this)</span>
+<span class="k">await</span> htpio.<span class="f">post</span>(
+  <span class="s">&#x27;/oauth/token&#x27;</span>,
+  data: {<span class="s">&#x27;grant_type&#x27;</span>: <span class="s">&#x27;password&#x27;</span>, <span class="s">&#x27;username&#x27;</span>: <span class="s">&#x27;ada&#x27;</span>, <span class="s">&#x27;password&#x27;</span>: <span class="s">&#x27;pw&#x27;</span>},
+  headers: {<span class="s">&#x27;content-type&#x27;</span>: <span class="s">&#x27;application/x-www-form-urlencoded&#x27;</span>},
+);
+
+<span class="c">// Plain text and raw bytes</span>
+<span class="k">await</span> htpio.<span class="f">post</span>(<span class="s">&#x27;/notes&#x27;</span>, data: <span class="s">&#x27;Remember the milk&#x27;</span>);
+<span class="k">await</span> htpio.<span class="f">put</span>(<span class="s">&#x27;/avatar&#x27;</span>, data: [<span class="n">0x89</span>, <span class="n">0x50</span>, <span class="n">0x4E</span>, <span class="n">0x47</span>]);</code></pre></figure>
+</article>
+<article class="item" id="FormData" data-name="formdata">
+<h3><a class="anchor" href="#FormData">FormData</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">FormData</span>()
+<span class="k">factory</span> <span class="t">FormData</span>.<span class="f">fromMap</span>(<span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt; map)
+<span class="k">final</span> <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt; fields
+<span class="k">final</span> <span class="t">List</span>&lt;<span class="t">MapEntry</span>&lt;<span class="t">String</span>, <span class="t">HtpioMultipartFile</span>&gt;&gt; files</code></pre>
+<p>A file-upload body (<code>multipart/form-data</code>). In <code>fromMap</code>, <code>HtpioMultipartFile</code> values (or lists of them) become files and every other value is sent as text. You can send the same form again; files are re-read each time, so retries work.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> form = <span class="t">FormData</span>.<span class="f">fromMap</span>({
+  <span class="s">&#x27;title&#x27;</span>: <span class="s">&#x27;My holiday&#x27;</span>,
+  <span class="s">&#x27;public&#x27;</span>: <span class="k">true</span>,
+  <span class="s">&#x27;photo&#x27;</span>: <span class="t">HtpioMultipartFile</span>.<span class="f">fromPath</span>(file.path, contentType: <span class="s">&#x27;image/jpeg&#x27;</span>),
+  <span class="s">&#x27;extras&#x27;</span>: [
+    <span class="t">HtpioMultipartFile</span>.<span class="f">fromPath</span>(<span class="s">&#x27;${dir.path}/a.jpg&#x27;</span>),
+    <span class="t">HtpioMultipartFile</span>.<span class="f">fromPath</span>(<span class="s">&#x27;${dir.path}/b.jpg&#x27;</span>),
+  ],
+});
+<span class="k">await</span> htpio.<span class="f">post</span>(<span class="s">&#x27;/albums&#x27;</span>, data: form);
+
+<span class="c">// Or build it step by step</span>
+<span class="k">final</span> form2 = <span class="t">FormData</span>();
+form2.fields[<span class="s">&#x27;title&#x27;</span>] = <span class="s">&#x27;Report&#x27;</span>;
+form2.files.<span class="f">add</span>(<span class="t">MapEntry</span>(<span class="s">&#x27;pdf&#x27;</span>, <span class="t">HtpioMultipartFile</span>.<span class="f">fromPath</span>(<span class="s">&#x27;${dir.path}/r.pdf&#x27;</span>)));
+<span class="k">await</span> htpio.<span class="f">post</span>(<span class="s">&#x27;/reports&#x27;</span>, data: form2);</code></pre></figure>
+</article>
+<article class="item" id="HtpioMultipartFile" data-name="htpiomultipartfile">
+<h3><a class="anchor" href="#HtpioMultipartFile">HtpioMultipartFile</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">HtpioMultipartFile</span>.<span class="f">fromPath</span>(<span class="t">String</span> path, {<span class="t">String</span>? filename, <span class="t">String</span>? contentType})
+<span class="t">HtpioMultipartFile</span>.<span class="f">fromBytes</span>(<span class="t">List</span>&lt;int&gt; bytes, {<span class="t">String</span>? filename, <span class="t">String</span>? contentType})
+<span class="t">HtpioMultipartFile</span>.<span class="f">fromString</span>(<span class="t">String</span> value, {<span class="t">String</span>? filename, <span class="t">String</span>? contentType})</code></pre>
+<p>One file inside a <code>FormData</code>. <code>fromPath</code> reads from disk and works on mobile and desktop. On the web there are no file paths, so use <code>fromBytes</code> (for example with bytes from a file picker).</p>
+<div class="scroll"><table class="params"><thead><tr><th>Parameter</th><th>Type</th><th>What it does</th></tr></thead><tbody><tr><td><code class="p">filename</code></td><td><code class="ty">String?</code></td><td>Name the server sees. Defaults to the file’s name for <code>fromPath</code>.</td></tr><tr><td><code class="p">contentType</code></td><td><code class="ty">String?</code></td><td>MIME type, e.g. <code>image/png</code>.</td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> a = <span class="t">HtpioMultipartFile</span>.<span class="f">fromPath</span>(file.path, contentType: <span class="s">&#x27;image/jpeg&#x27;</span>);
+<span class="k">final</span> b = <span class="t">HtpioMultipartFile</span>.<span class="f">fromBytes</span>(pickedBytes, filename: <span class="s">&#x27;photo.png&#x27;</span>);
+<span class="k">final</span> c = <span class="t">HtpioMultipartFile</span>.<span class="f">fromString</span>(<span class="s">&#x27;name,age\nAda,36&#x27;</span>, filename: <span class="s">&#x27;people.csv&#x27;</span>);</code></pre></figure>
+</article></section>
+<section class="group-sec" id="responses"><h2>Responses</h2><article class="item" id="HtpioResponse" data-name="htpioresponse&lt;t&gt;">
+<h3><a class="anchor" href="#HtpioResponse">HtpioResponse&lt;T&gt;</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">final</span> <span class="t">T</span> data
+<span class="k">final</span> int statusCode
+<span class="k">final</span> <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt; headers
+<span class="k">final</span> <span class="t">HtpioRequest</span>? request
+<span class="k">final</span> <span class="t">String</span>? reasonPhrase
+bool <span class="k">get</span> isSuccess</code></pre>
+<p>What every request returns.</p>
+<div class="scroll"><table class="params"><thead><tr><th>Parameter</th><th>Type</th><th>What it does</th></tr></thead><tbody><tr><td><code class="p">data</code></td><td><code class="ty">T</code></td><td>The body: decoded JSON, a String, bytes, or your model.</td></tr><tr><td><code class="p">statusCode</code></td><td><code class="ty">int</code></td><td>e.g. <code>200</code>, <code>201</code>, <code>204</code>.</td></tr><tr><td><code class="p">headers</code></td><td><code class="ty">Map&lt;String, String&gt;</code></td><td>Response headers with lower-case keys.</td></tr><tr><td><code class="p">request</code></td><td><code class="ty">HtpioRequest?</code></td><td>The request that produced it.</td></tr><tr><td><code class="p">reasonPhrase</code></td><td><code class="ty">String?</code></td><td>Status text, e.g. <code>OK</code>.</td></tr><tr><td><code class="p">isSuccess</code></td><td><code class="ty">bool</code></td><td><code>true</code> for 200–299.</td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> res = <span class="k">await</span> htpio.<span class="k">get</span>(<span class="s">&#x27;/users/1&#x27;</span>);
+<span class="f">print</span>(res.statusCode);              <span class="c">// 200</span>
+<span class="f">print</span>(res.headers[<span class="s">&#x27;content-type&#x27;</span>]); <span class="c">// application/json</span>
+<span class="f">print</span>(res.isSuccess);               <span class="c">// true</span></code></pre></figure>
+</article>
+<article class="item" id="ResponseType" data-name="responsetype">
+<h3><a class="anchor" href="#ResponseType">ResponseType</a><span class="kind">enum</span></h3>
+<pre class="sig"><code><span class="k">enum</span> <span class="t">ResponseType</span> { json, plain, bytes }</code></pre>
+<p>How the body is decoded. With <code>json</code> (the default), a body that isn’t valid JSON is returned as a String instead of failing. An empty body gives <code>null</code>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> html  = <span class="k">await</span> htpio.<span class="k">get</span>&lt;<span class="t">String</span>&gt;(<span class="s">&#x27;/page&#x27;</span>, responseType: <span class="t">ResponseType</span>.plain);
+<span class="k">final</span> image = <span class="k">await</span> htpio.<span class="k">get</span>&lt;<span class="t">Uint8List</span>&gt;(<span class="s">&#x27;/logo.png&#x27;</span>, responseType: <span class="t">ResponseType</span>.bytes);
+<span class="c">// Flutter: Image.memory(image.data)</span></code></pre></figure>
+</article>
+<article class="item" id="fromJson-decoder" data-name="fromjson vs decoder">
+<h3><a class="anchor" href="#fromJson-decoder">fromJson vs decoder</a><span class="kind">guide</span></h3>
+<p>Both turn the response body into your own type. Pick by the shape of the JSON.</p>
+<div class="scroll"><table class="grid"><thead><tr><th>JSON shape</th><th>Use</th></tr></thead><tbody><tr><td><code>{ "id": 1, … }</code></td><td><code>fromJson: User.fromJson</code></td></tr><tr><td><code>[ {…}, {…} ]</code></td><td><code>decoder: (d) => [for (final e in d as List) User.fromJson(e)]</code></td></tr><tr><td><code>{ "data": [ … ], "total": 9 }</code></td><td><code>decoder: (d) => Page.fromJson(d)</code></td></tr><tr><td>anything, no conversion</td><td>leave both out; <code>res.data</code> is a Map, List or String</td></tr></tbody></table></div>
+<p>If <code>fromJson</code> receives a JSON list, the list is passed as <code>{'data': list}</code>. If your <code>fromJson</code> or <code>decoder</code> throws, the request fails with <code>HtpioErrorType.parse</code>.</p>
+</article></section>
+<section class="group-sec" id="errors"><h2>Errors</h2><article class="item" id="HtpioError" data-name="htpioerror">
+<h3><a class="anchor" href="#HtpioError">HtpioError</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">final</span> <span class="t">String</span> message
+<span class="k">final</span> <span class="t">HtpioErrorType</span> type
+<span class="k">final</span> int? statusCode
+<span class="k">final</span> <span class="t">HtpioResponse</span>? response
+<span class="k">final</span> <span class="t">HtpioRequest</span>? request
+<span class="k">final</span> <span class="k">dynamic</span> originalError
+<span class="k">final</span> <span class="t">StackTrace</span>? stackTrace</code></pre>
+<p>The only exception htpio throws, so you need just one <code>catch</code>. For a 4xx or 5xx reply, <code>response.data</code> holds the error body the server sent.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">try</span> {
+  <span class="k">await</span> htpio.<span class="k">get</span>(<span class="s">&#x27;/missing&#x27;</span>);
+} <span class="k">on</span> <span class="t">HtpioError</span> <span class="k">catch</span> (e) {
+  <span class="f">print</span>(e);
+  <span class="f">print</span>(<span class="s">&#x27;type=${e.type.name} status=${e.statusCode} body=${e.response?.data}&#x27;</span>);
+}</code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>HtpioError(badResponse) [404]: Request failed with status code 404
+type=badResponse status=404 body={message: User not found}</pre></figure>
+</article>
+<article class="item" id="HtpioErrorType" data-name="htpioerrortype">
+<h3><a class="anchor" href="#HtpioErrorType">HtpioErrorType</a><span class="kind">enum</span></h3>
+<pre class="sig"><code><span class="k">enum</span> <span class="t">HtpioErrorType</span> { timeout, badResponse, cancel, connectionError, offline, parse, unknown }</code></pre>
+<p>Use it to show the right message to the user.</p>
+<div class="scroll"><table class="grid"><thead><tr><th>Value</th><th>Happens when</th></tr></thead><tbody><tr><td><code>badResponse</code></td><td>The server replied with a status outside <code>validateStatus</code> (4xx/5xx by default).</td></tr><tr><td><code>timeout</code></td><td>The request took longer than its <code>timeout</code>.</td></tr><tr><td><code>connectionError</code></td><td>No internet, DNS failure, refused connection, TLS error.</td></tr><tr><td><code>cancel</code></td><td>A <code>CancelToken</code> was cancelled.</td></tr><tr><td><code>offline</code></td><td><code>OfflineMode</code> knows the device is offline.</td></tr><tr><td><code>parse</code></td><td><code>fromJson</code> / <code>decoder</code> threw, or the data isn’t a <code>T</code>.</td></tr><tr><td><code>unknown</code></td><td>Anything else. See <code>originalError</code>.</td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="t">String</span> <span class="f">messageFor</span>(<span class="t">HtpioError</span> e) =&gt; <span class="k">switch</span> (e.type) {
+      <span class="t">HtpioErrorType</span>.timeout =&gt; <span class="s">&#x27;The server is slow. Please try again.&#x27;</span>,
+      <span class="t">HtpioErrorType</span>.connectionError ||
+      <span class="t">HtpioErrorType</span>.offline =&gt; <span class="s">&#x27;No internet connection.&#x27;</span>,
+      <span class="t">HtpioErrorType</span>.badResponse <span class="k">when</span> e.statusCode == <span class="n">401</span> =&gt; <span class="s">&#x27;Please log in again.&#x27;</span>,
+      <span class="t">HtpioErrorType</span>.badResponse =&gt; <span class="s">&#x27;Server error (${e.statusCode}).&#x27;</span>,
+      _ =&gt; <span class="s">&#x27;Something went wrong.&#x27;</span>,
+    };</code></pre></figure>
+</article>
+<article class="item" id="validateStatus" data-name="validatestatus">
+<h3><a class="anchor" href="#validateStatus">validateStatus</a><span class="kind">guide</span></h3>
+<p>Decides which status codes count as success. Set it on the client for all requests, or on a single <code>HtpioRequest</code>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="c">// Treat 4xx as normal responses and only throw on 5xx</span>
+<span class="k">final</span> lenient = <span class="t">HtpioClient</span>(validateStatus: (status) =&gt; status &lt; <span class="n">500</span>);
+<span class="k">final</span> res = <span class="k">await</span> lenient.<span class="k">get</span>(<span class="s">&#x27;https://api.example.com/maybe-missing&#x27;</span>);
+<span class="k">if</span> (res.statusCode == <span class="n">404</span>) <span class="f">print</span>(<span class="s">&#x27;not found&#x27;</span>);</code></pre></figure>
+</article></section>
+<section class="group-sec" id="cancel"><h2>Cancel & timeout</h2><article class="item" id="CancelToken" data-name="canceltoken">
+<h3><a class="anchor" href="#CancelToken">CancelToken</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">CancelToken</span>()
+<span class="k">void</span> <span class="f">cancel</span>([<span class="t">Object</span>? reason])
+bool <span class="k">get</span> isCancelled
+<span class="t">Object</span>? <span class="k">get</span> reason
+<span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="k">get</span> whenCancelled</code></pre>
+<p>Stops a request that is already running. One token can cancel many requests. A cancelled request throws <code>HtpioError</code> with type <code>cancel</code>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> cancelToken = <span class="t">CancelToken</span>();
+<span class="k">final</span> future = htpio.<span class="k">get</span>(<span class="s">&#x27;/slow&#x27;</span>, cancelToken: cancelToken);
+cancelToken.<span class="f">cancel</span>(<span class="s">&#x27;user left the page&#x27;</span>);
+
+<span class="k">try</span> {
+  <span class="k">await</span> future;
+} <span class="k">on</span> <span class="t">HtpioError</span> <span class="k">catch</span> (e) {
+  <span class="f">print</span>(e);
+}</code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>HtpioError(cancel): Request was cancelled</pre></figure>
+</article>
+<article class="item" id="search-as-you-type" data-name="recipe: search as you type">
+<h3><a class="anchor" href="#search-as-you-type">Recipe: search as you type</a><span class="kind">guide</span></h3>
+<p>Cancel the previous search each time the user types, so an old, slow reply can never overwrite the new one.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">class</span> <span class="t">SearchController</span> {
+  <span class="t">CancelToken</span>? _last;
+
+  <span class="t">Future</span>&lt;<span class="t">List</span>&lt;<span class="k">dynamic</span>&gt;?&gt; <span class="f">onChanged</span>(<span class="t">String</span> text) <span class="k">async</span> {
+    _last?.<span class="f">cancel</span>();
+    <span class="k">final</span> cancelToken = _last = <span class="t">CancelToken</span>();
+    <span class="k">try</span> {
+      <span class="k">final</span> res = <span class="k">await</span> htpio.<span class="k">get</span>(
+        <span class="s">&#x27;/search&#x27;</span>,
+        queryParameters: {<span class="s">&#x27;q&#x27;</span>: text},
+        cancelToken: cancelToken,
+      );
+      <span class="k">return</span> res.data <span class="k">as</span> <span class="t">List</span>;
+    } <span class="k">on</span> <span class="t">HtpioError</span> <span class="k">catch</span> (e) {
+      <span class="k">if</span> (e.type == <span class="t">HtpioErrorType</span>.cancel) <span class="k">return</span> <span class="k">null</span>; <span class="c">// replaced by a newer search</span>
+      <span class="k">rethrow</span>;
+    }
+  }
+}</code></pre></figure>
+</article>
+<article class="item" id="timeout" data-name="timeouts">
+<h3><a class="anchor" href="#timeout">Timeouts</a><span class="kind">guide</span></h3>
+<p>A timeout covers the whole request, from connecting to the last byte. Set a default on the client and override it per request.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> htpio2 = <span class="t">HtpioClient</span>(timeout: <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">20</span>));
+<span class="k">await</span> htpio2.<span class="k">get</span>(<span class="s">&#x27;https://api.example.com/report&#x27;</span>, timeout: <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">60</span>));</code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>HtpioError(timeout): Request timed out after 60000 ms   ← if the report takes longer than 60 s</pre></figure>
+</article></section>
+<section class="group-sec" id="interceptors"><h2>Interceptors</h2><article class="item" id="HtpioInterceptor" data-name="htpiointerceptor">
+<h3><a class="anchor" href="#HtpioInterceptor">HtpioInterceptor</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">abstract</span> <span class="k">class</span> <span class="t">HtpioInterceptor</span> {
+  <span class="t">HtpioClient</span>? client;
+  <span class="t">Future</span>&lt;<span class="t">HtpioRequest</span>&gt; <span class="f">onRequest</span>(<span class="t">HtpioRequest</span> request);
+  <span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&gt; <span class="f">onResponse</span>(<span class="t">HtpioResponse</span> response);
+  <span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&gt; <span class="f">onError</span>(<span class="t">HtpioError</span> error, <span class="t">HtpioRequest</span> request);
+}</code></pre>
+<p>Base class for your own interceptors. Override only the methods you need. <code>onRequest</code> can change the request before it is sent. <code>onResponse</code> can change the response. <code>onError</code> can recover by returning a response, or pass the error on by throwing it. <code>client</code> is set when you call <code>addInterceptor</code>; use <code>client!.send(request)</code> to send a request again.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">class</span> <span class="t">ApiKeyInterceptor</span> <span class="k">extends</span> <span class="t">HtpioInterceptor</span> {
+  <span class="a">@override</span>
+  <span class="t">Future</span>&lt;<span class="t">HtpioRequest</span>&gt; <span class="f">onRequest</span>(<span class="t">HtpioRequest</span> request) <span class="k">async</span> {
+    request.headers[<span class="s">&#x27;x-api-key&#x27;</span>] = <span class="s">&#x27;my-key&#x27;</span>;
+    <span class="k">return</span> request;
+  }
+}
+
+<span class="c">/// Unwraps APIs that answer {&quot;success&quot;: true, &quot;data&quot;: {...}}.</span>
+<span class="k">class</span> <span class="t">EnvelopeInterceptor</span> <span class="k">extends</span> <span class="t">HtpioInterceptor</span> {
+  <span class="a">@override</span>
+  <span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&gt; <span class="f">onResponse</span>(<span class="t">HtpioResponse</span> response) <span class="k">async</span> {
+    <span class="k">final</span> body = response.data;
+    <span class="k">if</span> (body <span class="k">is</span> <span class="t">Map</span> &amp;&amp; body.<span class="f">containsKey</span>(<span class="s">&#x27;data&#x27;</span>)) {
+      <span class="k">return</span> <span class="t">HtpioResponse</span>(
+        data: body[<span class="s">&#x27;data&#x27;</span>],
+        statusCode: response.statusCode,
+        headers: response.headers,
+        request: response.request,
+      );
+    }
+    <span class="k">return</span> response;
+  }
+}
+
+<span class="c">/// Shows cached data when the server is down.</span>
+<span class="k">class</span> <span class="t">FallbackInterceptor</span> <span class="k">extends</span> <span class="t">HtpioInterceptor</span> {
+  <span class="a">@override</span>
+  <span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&gt; <span class="f">onError</span>(<span class="t">HtpioError</span> error, <span class="t">HtpioRequest</span> request) <span class="k">async</span> {
+    <span class="k">if</span> (error.statusCode == <span class="n">503</span>) {
+      <span class="k">return</span> <span class="t">HtpioResponse</span>(data: {<span class="s">&#x27;maintenance&#x27;</span>: <span class="k">true</span>}, statusCode: <span class="n">200</span>, request: request);
+    }
+    <span class="k">throw</span> error;
+  }
+}</code></pre></figure>
+</article>
+<article class="item" id="AuthTokenInterceptor" data-name="authtokeninterceptor">
+<h3><a class="anchor" href="#AuthTokenInterceptor">AuthTokenInterceptor</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">AuthTokenInterceptor</span>({
+  <span class="t">String</span>? token,
+  <span class="t">String</span> headerName = <span class="s">&#x27;Authorization&#x27;</span>,
+  <span class="t">String</span> tokenPrefix = <span class="s">&#x27;Bearer&#x27;</span>,
+  <span class="t">FutureOr</span>&lt;<span class="t">String</span>?&gt; <span class="t">Function</span>()? tokenProvider,
+  <span class="t">Future</span>&lt;<span class="t">String</span>?&gt; <span class="t">Function</span>()? onRefreshToken,
+  <span class="t">List</span>&lt;int&gt; refreshStatusCodes = <span class="k">const</span> [<span class="n">401</span>],
+})
+<span class="t">String</span>? <span class="k">get</span> token
+<span class="k">void</span> <span class="f">setToken</span>(<span class="t">String</span>? token)
+<span class="k">void</span> <span class="f">clearToken</span>()</code></pre>
+<p>Adds <code>Authorization: Bearer &lt;token&gt;</code> to every request. With <code>onRefreshToken</code> set, a 401 reply triggers one token refresh and the request is sent again. If several requests fail at the same moment, they share a single refresh.</p>
+<div class="scroll"><table class="params"><thead><tr><th>Parameter</th><th>Type</th><th>What it does</th></tr></thead><tbody><tr><td><code class="p">token</code></td><td><code class="ty">String?</code></td><td>Starting token.</td></tr><tr><td><code class="p">tokenProvider</code></td><td><code class="ty">Function</code></td><td>Reads the token for each request, e.g. from secure storage. Used when no token is set.</td></tr><tr><td><code class="p">onRefreshToken</code></td><td><code class="ty">Future&lt;String?&gt; Function()</code></td><td>Returns a new token. Return <code>null</code> to give up; the original 401 error is then thrown.</td></tr><tr><td><code class="p">headerName / tokenPrefix</code></td><td><code class="ty">String</code></td><td>For APIs that use another header: <code>headerName: 'x-api-key', tokenPrefix: ''</code>.</td></tr><tr><td><code class="p">refreshStatusCodes</code></td><td><code class="ty">List&lt;int&gt;</code></td><td>Which codes mean “token expired”. Default <code>[401]</code>.</td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> auth = <span class="t">AuthTokenInterceptor</span>(
+  token: token,
+  onRefreshToken: () <span class="k">async</span> {
+    <span class="c">// Use a separate client so the refresh call isn&#x27;t intercepted.</span>
+    <span class="k">final</span> res = <span class="k">await</span> <span class="t">HtpioClient</span>().<span class="f">post</span>(
+      <span class="s">&#x27;https://api.example.com/auth/refresh&#x27;</span>,
+      data: {<span class="s">&#x27;refresh_token&#x27;</span>: refreshToken},
+    );
+    <span class="k">return</span> res.data[<span class="s">&#x27;access_token&#x27;</span>] <span class="k">as</span> <span class="t">String</span>?;
+  },
+);
+htpio.<span class="f">addInterceptor</span>(auth);
+
+auth.<span class="f">setToken</span>(<span class="s">&#x27;token-after-login&#x27;</span>);
+auth.<span class="f">clearToken</span>(); <span class="c">// on logout</span></code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>200 {auth: Bearer fresh}   ← first try got 401, token refreshed, request repeated</pre></figure>
+</article>
+<article class="item" id="RetryInterceptor" data-name="retryinterceptor">
+<h3><a class="anchor" href="#RetryInterceptor">RetryInterceptor</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">RetryInterceptor</span>({
+  int maxRetries = <span class="n">3</span>,
+  <span class="t">Duration</span> baseDelay = <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">1</span>),
+  bool useExponentialBackoff = <span class="k">true</span>,
+  <span class="t">List</span>&lt;int&gt; retryableStatusCodes = <span class="k">const</span> [<span class="n">408</span>, <span class="n">429</span>, <span class="n">500</span>, <span class="n">502</span>, <span class="n">503</span>, <span class="n">504</span>],
+  <span class="t">Set</span>&lt;<span class="t">String</span>&gt; retryMethods = <span class="k">const</span> {<span class="s">&#x27;GET&#x27;</span>, <span class="s">&#x27;HEAD&#x27;</span>, <span class="s">&#x27;PUT&#x27;</span>, <span class="s">&#x27;DELETE&#x27;</span>, <span class="s">&#x27;OPTIONS&#x27;</span>},
+  bool <span class="t">Function</span>(<span class="t">HtpioError</span> error)? retryIf,
+})
+bool <span class="f">shouldRetry</span>(<span class="t">HtpioError</span> error, <span class="t">HtpioRequest</span> request)
+<span class="t">Duration</span> <span class="f">delayFor</span>(int attempt)</code></pre>
+<p>Retries failed requests, waiting 1 s, then 2 s, then 4 s. It retries timeouts, connection errors and the status codes listed. POST is not retried by default, so a payment is never sent twice.</p>
+<div class="scroll"><table class="params"><thead><tr><th>Parameter</th><th>Type</th><th>What it does</th></tr></thead><tbody><tr><td><code class="p">maxRetries</code></td><td><code class="ty">int</code></td><td>Retries after the first attempt.</td></tr><tr><td><code class="p">baseDelay</code></td><td><code class="ty">Duration</code></td><td>Wait before the first retry.</td></tr><tr><td><code class="p">useExponentialBackoff</code></td><td><code class="ty">bool</code></td><td><code>false</code> waits 1×, 2×, 3× <code>baseDelay</code> instead.</td></tr><tr><td><code class="p">retryMethods</code></td><td><code class="ty">Set&lt;String&gt;</code></td><td>Add <code>'POST'</code> only if your API is safe to repeat.</td></tr><tr><td><code class="p">retryIf</code></td><td><code class="ty">bool Function(HtpioError)</code></td><td>Your own rule. Replaces the built-in checks.</td></tr></tbody></table></div>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code>htpio.<span class="f">addInterceptor</span>(<span class="t">RetryInterceptor</span>(
+  maxRetries: <span class="n">3</span>,
+  baseDelay: <span class="k">const</span> <span class="t">Duration</span>(milliseconds: <span class="n">500</span>),
+  retryIf: (e) =&gt; e.type == <span class="t">HtpioErrorType</span>.connectionError || e.statusCode == <span class="n">503</span>,
+));</code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>200 {attempt: 3}   ← server failed twice with 503, third try succeeded</pre></figure>
+</article>
+<article class="item" id="HtpioLogInterceptor" data-name="htpiologinterceptor">
+<h3><a class="anchor" href="#HtpioLogInterceptor">HtpioLogInterceptor</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">HtpioLogInterceptor</span>({
+  bool requestHeaders = <span class="k">false</span>,
+  bool requestBody = <span class="k">false</span>,
+  bool responseHeaders = <span class="k">false</span>,
+  bool responseBody = <span class="k">false</span>,
+  <span class="k">void</span> <span class="t">Function</span>(<span class="t">String</span> line) logPrint = &lt;dart:developer log&gt;,
+  <span class="t">Set</span>&lt;<span class="t">String</span>&gt; hiddenHeaders = <span class="k">const</span> {<span class="s">&#x27;authorization&#x27;</span>, <span class="s">&#x27;cookie&#x27;</span>, <span class="s">&#x27;set-cookie&#x27;</span>},
+})</code></pre>
+<p>Logs every request and response. Tokens and cookies are always shown as <code>***</code>. Pass <code>logPrint: debugPrint</code> to send the lines to the Flutter console.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code>htpio.<span class="f">addInterceptor</span>(<span class="t">HtpioLogInterceptor</span>(
+  requestHeaders: <span class="k">true</span>,
+  responseBody: <span class="k">true</span>,
+  logPrint: debugPrint,
+));</code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>--&gt; GET https://api.example.com/users/1
+Authorization: ***
+&lt;-- 200 GET https://api.example.com/users/1
+{id: 1, name: Ada Lovelace}</pre></figure>
+</article>
+<article class="item" id="HtpioMiddleware" data-name="htpiomiddleware">
+<h3><a class="anchor" href="#HtpioMiddleware">HtpioMiddleware</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">abstract</span> <span class="k">class</span> <span class="t">HtpioMiddleware</span> {
+  <span class="t">HtpioClient</span>? client;
+  <span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">beforeRequest</span>(<span class="t">HtpioRequest</span> request);
+  <span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">afterResponse</span>(<span class="t">HtpioResponse</span> response);
+  <span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">onError</span>(<span class="t">HtpioError</span> error);
+}</code></pre>
+<p>Watches requests without changing them. Use it for analytics, timing or crash reporting. Throwing in <code>beforeRequest</code> stops the request. <code>onError</code> runs once, after all retries have finished.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">class</span> <span class="t">TimingMiddleware</span> <span class="k">extends</span> <span class="t">HtpioMiddleware</span> {
+  <span class="k">final</span> _watch = <span class="t">Stopwatch</span>();
+
+  <span class="a">@override</span>
+  <span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">beforeRequest</span>(<span class="t">HtpioRequest</span> request) <span class="k">async</span> =&gt; _watch
+    ..<span class="f">reset</span>()
+    ..<span class="f">start</span>();
+
+  <span class="a">@override</span>
+  <span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">afterResponse</span>(<span class="t">HtpioResponse</span> response) <span class="k">async</span> =&gt;
+      <span class="f">print</span>(<span class="s">&#x27;${response.request?.uri.path} took ${_watch.elapsedMilliseconds} ms&#x27;</span>);
+
+  <span class="a">@override</span>
+  <span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">onError</span>(<span class="t">HtpioError</span> error) <span class="k">async</span> =&gt;
+      <span class="f">print</span>(<span class="s">&#x27;report to crashlytics: $error&#x27;</span>);
+}</code></pre></figure>
+<figure class="code"><figcaption><span>Usage</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code>htpio.<span class="f">use</span>(<span class="t">TimingMiddleware</span>());</code></pre></figure>
+</article></section>
+<section class="group-sec" id="offline"><h2>Cache & offline</h2><article class="item" id="HtpioCache" data-name="htpiocache">
+<h3><a class="anchor" href="#HtpioCache">HtpioCache</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">HtpioCache</span>({<span class="t">Duration</span> defaultTtl = <span class="k">const</span> <span class="t">Duration</span>(minutes: <span class="n">5</span>), int maxEntries = <span class="n">100</span>})
+<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;? <span class="k">get</span>&lt;<span class="t">T</span>&gt;(<span class="t">String</span> key)
+<span class="k">void</span> <span class="k">set</span>&lt;<span class="t">T</span>&gt;(<span class="t">String</span> key, <span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt; response, {<span class="t">Duration</span>? ttl})
+<span class="k">void</span> <span class="f">remove</span>(<span class="t">String</span> key)
+<span class="k">void</span> <span class="f">clear</span>()
+bool <span class="f">containsKey</span>(<span class="t">String</span> key)
+int <span class="k">get</span> size</code></pre>
+<p>An in-memory cache. Pass it to the client, then add <code>cache: true</code> to the GET requests you want cached. Only successful GET responses are stored. Keys look like <code>GET:https://api.example.com/categories</code>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> cached = <span class="t">HtpioClient</span>(
+  baseUrl: <span class="s">&#x27;https://api.example.com&#x27;</span>,
+  cache: <span class="t">HtpioCache</span>(defaultTtl: <span class="k">const</span> <span class="t">Duration</span>(minutes: <span class="n">10</span>)),
+);
+
+<span class="k">await</span> cached.<span class="k">get</span>(<span class="s">&#x27;/categories&#x27;</span>, cache: <span class="k">true</span>); <span class="c">// network</span>
+<span class="k">await</span> cached.<span class="k">get</span>(<span class="s">&#x27;/categories&#x27;</span>, cache: <span class="k">true</span>); <span class="c">// memory, for 10 minutes</span>
+
+cached.cache!.<span class="f">remove</span>(<span class="s">&#x27;GET:https://api.example.com/categories&#x27;</span>);
+cached.cache!.<span class="f">clear</span>(); <span class="c">// e.g. on logout</span></code></pre></figure>
+</article>
+<article class="item" id="OfflineMode" data-name="offlinemode">
+<h3><a class="anchor" href="#OfflineMode">OfflineMode</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">OfflineMode</span>({
+  <span class="t">Duration</span> checkInterval = <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">5</span>),
+  <span class="t">Future</span>&lt;bool&gt; <span class="t">Function</span>()? connectivityChecker,
+  <span class="t">Set</span>&lt;<span class="t">String</span>&gt; queueMethods = <span class="k">const</span> {<span class="s">&#x27;POST&#x27;</span>, <span class="s">&#x27;PUT&#x27;</span>, <span class="s">&#x27;PATCH&#x27;</span>, <span class="s">&#x27;DELETE&#x27;</span>},
+  int maxQueueSize = <span class="n">100</span>,
+})
+<span class="t">Stream</span>&lt;bool&gt; <span class="k">get</span> connectivityStream
+<span class="t">Stream</span>&lt;<span class="t">Object</span>&gt; <span class="k">get</span> replayResults
+bool <span class="k">get</span> isOnline
+int <span class="k">get</span> queuedRequestsCount
+<span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">refresh</span>()
+<span class="t">Future</span>&lt;<span class="k">void</span>&gt; <span class="f">retryQueuedRequests</span>()
+<span class="k">void</span> <span class="f">clearQueue</span>()
+<span class="k">void</span> <span class="f">dispose</span>()</code></pre>
+<p>While the device is offline, requests fail immediately with <code>HtpioErrorType.offline</code>, so the user isn’t left waiting for a timeout. Saves (POST, PUT, PATCH, DELETE) are queued and sent automatically when the connection comes back. Each replayed result appears on <code>replayResults</code>.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> offline = <span class="t">OfflineMode</span>();
+htpio.<span class="f">use</span>(offline);
+
+offline.connectivityStream.<span class="f">listen</span>((online) {
+  <span class="f">print</span>(online ? <span class="s">&#x27;Back online&#x27;</span> : <span class="s">&#x27;You are offline&#x27;</span>);
+});
+offline.replayResults.<span class="f">listen</span>((result) {
+  <span class="k">if</span> (result <span class="k">is</span> <span class="t">HtpioResponse</span>) <span class="f">print</span>(<span class="s">&#x27;synced ${result.request?.uri}&#x27;</span>);
+  <span class="k">if</span> (result <span class="k">is</span> <span class="t">HtpioError</span>) <span class="f">print</span>(<span class="s">&#x27;sync failed: $result&#x27;</span>);
+});
+
+<span class="f">print</span>(offline.queuedRequestsCount);
+<span class="k">await</span> offline.<span class="f">refresh</span>();            <span class="c">// check now instead of waiting</span>
+<span class="k">await</span> offline.<span class="f">retryQueuedRequests</span>();
+offline.<span class="f">dispose</span>();                  <span class="c">// when the app closes</span></code></pre></figure>
+</article>
+<article class="item" id="ConnectivityHelper" data-name="connectivityhelper">
+<h3><a class="anchor" href="#ConnectivityHelper">ConnectivityHelper</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">static</span> <span class="t">Future</span>&lt;bool&gt; <span class="f">isOnline</span>({<span class="t">String</span> host = <span class="s">&#x27;google.com&#x27;</span>, <span class="t">Duration</span> timeout})
+<span class="k">static</span> <span class="t">Future</span>&lt;bool&gt; <span class="f">isOnlineReliable</span>({<span class="t">List</span>&lt;<span class="t">String</span>&gt; hosts, <span class="t">Duration</span> timeout})
+<span class="k">static</span> <span class="t">Stream</span>&lt;bool&gt; <span class="f">watch</span>({<span class="t">Duration</span> interval})
+<span class="k">static</span> <span class="t">Stream</span>&lt;bool&gt; <span class="k">get</span> onStatusChange
+<span class="k">static</span> <span class="t">Future</span>&lt;bool&gt; <span class="f">isWiFiConnected</span>()
+<span class="k">static</span> <span class="t">Future</span>&lt;<span class="t">List</span>&lt;<span class="t">NetworkInterface</span>&gt;&gt; <span class="f">getNetworkInterfaces</span>()</code></pre>
+<p>Quick internet checks you can call anywhere. On mobile and desktop they look up a host name (DNS). On the web they use the browser’s online status. <code>isWiFiConnected</code> is a rough guess; use the <code>connectivity_plus</code> package if you need an exact answer.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">if</span> (!<span class="k">await</span> <span class="t">ConnectivityHelper</span>.<span class="f">isOnline</span>()) {
+  <span class="f">print</span>(<span class="s">&#x27;Please connect to the internet&#x27;</span>);
+}
+<span class="k">final</span> sure = <span class="k">await</span> <span class="t">ConnectivityHelper</span>.<span class="f">isOnlineReliable</span>();
+<span class="t">ConnectivityHelper</span>.<span class="f">watch</span>(interval: <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">10</span>))
+    .<span class="f">listen</span>((online) =&gt; <span class="f">print</span>(<span class="s">&#x27;online: $online&#x27;</span>));</code></pre></figure>
+</article></section>
+<section class="group-sec" id="downloads"><h2>Downloads</h2><article class="item" id="HtpioDownloadManager" data-name="htpiodownloadmanager">
+<h3><a class="anchor" href="#HtpioDownloadManager">HtpioDownloadManager</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">HtpioDownloadManager</span>({http.<span class="t">Client</span>? httpClient})
+<span class="t">Future</span>&lt;<span class="t">File</span>&gt; <span class="f">downloadFile</span>({
+  <span class="k">required</span> <span class="t">String</span> url,
+  <span class="k">required</span> <span class="t">String</span> savePath,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt;? headers,
+  <span class="k">void</span> <span class="t">Function</span>(double progress)? onProgress,
+})
+<span class="k">void</span> <span class="f">pauseDownload</span>(<span class="t">String</span> url)
+<span class="k">void</span> <span class="f">resumeDownload</span>(<span class="t">String</span> url)
+<span class="k">void</span> <span class="f">cancelDownload</span>(<span class="t">String</span> url)
+double? <span class="f">getProgress</span>(<span class="t">String</span> url)
+bool <span class="f">isDownloading</span>(<span class="t">String</span> url)
+<span class="t">Stream</span>&lt;<span class="t">DownloadProgress</span>&gt; <span class="k">get</span> progressStream
+<span class="k">void</span> <span class="f">dispose</span>()</code></pre>
+<p>Downloads large files straight to disk with progress, pause, resume and cancel. Folders in <code>savePath</code> are created for you. If a download fails or is cancelled, the partial file is deleted. Needs a file system: on the web, use <code>get(url, responseType: ResponseType.bytes)</code> instead.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> downloads = <span class="t">HtpioDownloadManager</span>();
+
+<span class="k">final</span> saved = <span class="k">await</span> downloads.<span class="f">downloadFile</span>(
+  url: url,
+  savePath: <span class="s">&#x27;${dir.path}/videos/intro.mp4&#x27;</span>,
+  headers: {<span class="s">&#x27;Authorization&#x27;</span>: <span class="s">&#x27;Bearer $token&#x27;</span>},
+  onProgress: (p) =&gt; <span class="f">print</span>(<span class="s">&#x27;${(p * 100).toStringAsFixed(0)}%&#x27;</span>),
+);
+<span class="f">print</span>(<span class="s">&#x27;saved to ${saved.path}&#x27;</span>);
+
+downloads.<span class="f">pauseDownload</span>(url);
+downloads.<span class="f">resumeDownload</span>(url);
+downloads.<span class="f">cancelDownload</span>(url);      <span class="c">// downloadFile throws HtpioError(cancel)</span>
+<span class="f">print</span>(downloads.<span class="f">isDownloading</span>(url));
+<span class="f">print</span>(downloads.<span class="f">getProgress</span>(url));  <span class="c">// 0.0 – 1.0, or null</span></code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>50%
+100%
+saved to &lt;app documents&gt;/videos/intro.mp4</pre></figure>
+</article>
+<article class="item" id="DownloadProgress" data-name="downloadprogress">
+<h3><a class="anchor" href="#DownloadProgress">DownloadProgress</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">final</span> <span class="t">String</span> url
+<span class="k">final</span> double progress        <span class="c">// 0.0 – 1.0 (0 if size unknown)</span>
+<span class="k">final</span> int downloadedBytes
+<span class="k">final</span> int totalBytes         <span class="c">// -1 if the server didn&#x27;t say</span></code></pre>
+<p>One event on <code>progressStream</code>. Handy for showing every download in a single list.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="t">HtpioDownloadManager</span>().progressStream.<span class="f">listen</span>((p) {
+  <span class="f">print</span>(p); <span class="c">// DownloadProgress(url: …, progress: 42.0%, 420/1000 bytes)</span>
+});</code></pre></figure>
+</article></section>
+<section class="group-sec" id="testing"><h2>Mocking & testing</h2><article class="item" id="MockServer" data-name="mockserver">
+<h3><a class="anchor" href="#MockServer">MockServer</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">void</span> <span class="f">enable</span>()
+<span class="k">void</span> <span class="f">disable</span>()
+bool <span class="k">get</span> isEnabled
+<span class="k">void</span> <span class="f">registerMock</span>(<span class="t">String</span> url, <span class="k">dynamic</span> data, {int statusCode = <span class="n">200</span>,
+    <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt;? headers, <span class="t">Duration</span>? delay, <span class="t">String</span> method = <span class="s">&#x27;GET&#x27;</span>})
+<span class="k">void</span> <span class="f">registerSequentialMocks</span>(<span class="t">String</span> url, <span class="t">List</span>&lt;<span class="t">MockResponse</span>&gt; responses, {<span class="t">String</span> method = <span class="s">&#x27;GET&#x27;</span>})
+<span class="k">void</span> <span class="f">removeMock</span>(<span class="t">String</span> url, {<span class="t">String</span> method = <span class="s">&#x27;GET&#x27;</span>})
+<span class="k">void</span> <span class="f">clearMocks</span>()
+<span class="t">MockResponse</span>? <span class="f">match</span>(<span class="t">String</span> method, <span class="t">Uri</span> uri)
+<span class="t">Future</span>&lt;<span class="t">HtpioResponse</span>&lt;<span class="t">T</span>&gt;?&gt; <span class="f">getMockResponse</span>&lt;<span class="t">T</span>&gt;(<span class="t">HtpioRequest</span>&lt;<span class="t">T</span>&gt; request)</code></pre>
+<p>Fake API answers, with no server needed. Use it to build screens before the backend is ready, run demos offline, or test error screens. A mock URL can be a full URL or just a path. Error status codes throw, exactly as a real server would.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> mock = <span class="t">MockServer</span>()..<span class="f">enable</span>();
+mock.<span class="f">registerMock</span>(<span class="s">&#x27;/users/1&#x27;</span>, {<span class="s">&#x27;id&#x27;</span>: <span class="n">1</span>, <span class="s">&#x27;name&#x27;</span>: <span class="s">&#x27;Ada&#x27;</span>});
+mock.<span class="f">registerMock</span>(<span class="s">&#x27;/users&#x27;</span>, {<span class="s">&#x27;id&#x27;</span>: <span class="n">2</span>}, method: <span class="s">&#x27;POST&#x27;</span>, statusCode: <span class="n">201</span>);
+mock.<span class="f">registerMock</span>(<span class="s">&#x27;/users/404&#x27;</span>, {<span class="s">&#x27;message&#x27;</span>: <span class="s">&#x27;not found&#x27;</span>}, statusCode: <span class="n">404</span>);
+mock.<span class="f">registerMock</span>(<span class="s">&#x27;/slow&#x27;</span>, {<span class="s">&#x27;ok&#x27;</span>: <span class="k">true</span>}, delay: <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">2</span>));
+mock.<span class="f">registerSequentialMocks</span>(<span class="s">&#x27;/job/7&#x27;</span>, [
+  <span class="t">MockResponse</span>(data: {<span class="s">&#x27;state&#x27;</span>: <span class="s">&#x27;queued&#x27;</span>}),
+  <span class="t">MockResponse</span>(data: {<span class="s">&#x27;state&#x27;</span>: <span class="s">&#x27;running&#x27;</span>}),
+  <span class="t">MockResponse</span>(data: {<span class="s">&#x27;state&#x27;</span>: <span class="s">&#x27;done&#x27;</span>}),
+]);
+
+<span class="k">final</span> demo = <span class="t">HtpioClient</span>(baseUrl: <span class="s">&#x27;https://api.example.com&#x27;</span>, mockServer: mock);
+<span class="f">print</span>((<span class="k">await</span> demo.<span class="k">get</span>(<span class="s">&#x27;/users/1&#x27;</span>)).data);
+mock.<span class="f">disable</span>(); <span class="c">// back to the real network</span></code></pre></figure>
+<figure class="out"><figcaption>Output</figcaption><pre>{id: 1, name: Ada}</pre></figure>
+</article>
+<article class="item" id="MockResponse" data-name="mockresponse">
+<h3><a class="anchor" href="#MockResponse">MockResponse</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">MockResponse</span>({
+  <span class="k">required</span> <span class="k">dynamic</span> data,
+  int statusCode = <span class="n">200</span>,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt; headers = <span class="k">const</span> {},
+  <span class="t">Duration</span>? delay,
+})</code></pre>
+<p>One fake response for <code>registerSequentialMocks</code>. <code>data</code> is what the decoded JSON would look like (a Map, List or String).</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> r = <span class="t">MockResponse</span>(data: {<span class="s">&#x27;state&#x27;</span>: <span class="s">&#x27;done&#x27;</span>}, delay: <span class="k">const</span> <span class="t">Duration</span>(milliseconds: <span class="n">300</span>));</code></pre></figure>
+</article>
+<article class="item" id="unit-tests" data-name="unit tests with mockclient">
+<h3><a class="anchor" href="#unit-tests">Unit tests with MockClient</a><span class="kind">guide</span></h3>
+<p>For unit tests, pass <code>MockClient</code> from <code>package:http/testing.dart</code>. You can check exactly what was sent and reply with anything.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">import</span> <span class="s">&#x27;package:flutter_test/flutter_test.dart&#x27;</span>;
+<span class="k">import</span> <span class="s">&#x27;package:htpio/htpio.dart&#x27;</span>;
+<span class="k">import</span> <span class="s">&#x27;package:http/http.dart&#x27;</span> <span class="k">as</span> http;
+<span class="k">import</span> <span class="s">&#x27;package:http/testing.dart&#x27;</span>;
+
+<span class="k">void</span> <span class="f">main</span>() {
+  <span class="f">test</span>(<span class="s">&#x27;loads a user&#x27;</span>, () <span class="k">async</span> {
+    <span class="k">final</span> client = <span class="t">HtpioClient</span>(
+      baseUrl: <span class="s">&#x27;https://api.test&#x27;</span>,
+      httpClient: <span class="t">MockClient</span>((request) <span class="k">async</span> {
+        <span class="f">expect</span>(request.url.path, <span class="s">&#x27;/users/1&#x27;</span>);
+        <span class="k">return</span> http.<span class="t">Response</span>(<span class="s">&#x27;{&quot;id&quot;: 1, &quot;name&quot;: &quot;Ada&quot;}&#x27;</span>, <span class="n">200</span>);
+      }),
+    );
+    <span class="k">final</span> res = <span class="k">await</span> client.<span class="k">get</span>(<span class="s">&#x27;/users/1&#x27;</span>);
+    <span class="f">expect</span>(res.data[<span class="s">&#x27;name&#x27;</span>], <span class="s">&#x27;Ada&#x27;</span>);
+  });
+}</code></pre></figure>
+</article>
+<article class="item" id="DebugConsole" data-name="debugconsole">
+<h3><a class="anchor" href="#DebugConsole">DebugConsole</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="k">static</span> int maxLogs = <span class="n">200</span>
+<span class="k">void</span> <span class="f">log</span>(<span class="t">String</span> message)
+<span class="t">List</span>&lt;<span class="t">String</span>&gt; <span class="f">getLogs</span>()
+<span class="k">void</span> <span class="f">clear</span>()
+<span class="t">Widget</span> <span class="f">overlay</span>({int lines = <span class="n">5</span>})</code></pre>
+<p>Every client writes its requests and errors here. <code>overlay()</code> shows the latest lines on top of your app while you develop. Headers and bodies are never logged, so tokens don’t appear on screen.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="t">Widget</span> <span class="f">buildApp</span>() =&gt; <span class="t">MaterialApp</span>(
+      home: <span class="t">Stack</span>(
+        children: [
+          <span class="k">const</span> <span class="t">Placeholder</span>(), <span class="c">// your home page</span>
+          <span class="k">if</span> (kDebugMode) <span class="t">DebugConsole</span>().<span class="f">overlay</span>(lines: <span class="n">5</span>),
+        ],
+      ),
+    );</code></pre></figure>
+</article></section>
+<section class="group-sec" id="reference"><h2>Reference</h2><article class="item" id="HtpioRequest" data-name="htpiorequest&lt;t&gt;">
+<h3><a class="anchor" href="#HtpioRequest">HtpioRequest&lt;T&gt;</a><span class="kind">class</span></h3>
+<pre class="sig"><code><span class="t">HtpioRequest</span>({
+  <span class="k">required</span> <span class="t">String</span> url,
+  <span class="t">String</span> method = <span class="s">&#x27;GET&#x27;</span>,
+  <span class="k">dynamic</span> body,
+  bool cacheEnabled = <span class="k">false</span>,
+  <span class="t">Duration</span>? timeout,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="t">String</span>&gt;? headers,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? queryParameters,
+  <span class="t">T</span> <span class="t">Function</span>(<span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;)? fromJson,
+  <span class="t">T</span> <span class="t">Function</span>(<span class="k">dynamic</span> data)? decoder,
+  <span class="t">ResponseType</span> responseType = <span class="t">ResponseType</span>.json,
+  <span class="t">CancelToken</span>? cancelToken,
+  bool <span class="t">Function</span>(int statusCode)? validateStatus,
+  <span class="t">Map</span>&lt;<span class="t">String</span>, <span class="k">dynamic</span>&gt;? extra,
+})
+<span class="t">Uri</span> <span class="k">get</span> uri
+<span class="t">CancelToken</span> <span class="k">get</span> cancelToken
+bool <span class="k">get</span> isCancelled
+<span class="k">void</span> <span class="f">cancel</span>()
+<span class="t">HtpioRequest</span>&lt;<span class="t">T</span>&gt; <span class="f">copyWith</span>({url, method, body, headers, queryParameters, timeout, extra})</code></pre>
+<p>One request. The verb methods build these for you; build one yourself only for <code>send()</code> or inside an interceptor. <code>uri</code> is the final URL including query parameters.</p>
+<figure class="code"><figcaption><span>Example</span><button type="button" class="copy" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="k">final</span> req = <span class="t">HtpioRequest</span>&lt;<span class="t">User</span>&gt;(
+  url: <span class="s">&#x27;https://api.example.com/users&#x27;</span>,
+  queryParameters: {<span class="s">&#x27;page&#x27;</span>: <span class="n">2</span>},
+  fromJson: <span class="t">User</span>.fromJson,
+);
+<span class="f">print</span>(req.uri); <span class="c">// https://api.example.com/users?page=2</span>
+<span class="k">final</span> again = req.<span class="f">copyWith</span>(headers: {<span class="s">&#x27;x-retry&#x27;</span>: <span class="s">&#x27;1&#x27;</span>});</code></pre></figure>
+</article>
+<article class="item" id="platforms" data-name="platform support">
+<h3><a class="anchor" href="#platforms">Platform support</a><span class="kind">guide</span></h3>
+<p>htpio is pure Dart with no native code, so there is nothing to set up per platform. It also works when your app is compiled to WebAssembly (WASM).</p>
+<div class="scroll"><table class="grid"><thead><tr><th>Feature</th><th>Android · iOS · macOS · Windows · Linux</th><th>Web</th></tr></thead><tbody><tr><td>Requests, interceptors, cache, mock, cancel</td><td>Yes</td><td>Yes</td></tr><tr><td>Uploads with <code>fromBytes</code> / <code>fromString</code></td><td>Yes</td><td>Yes</td></tr><tr><td>Uploads with <code>fromPath</code></td><td>Yes</td><td>No (no file paths)</td></tr><tr><td><code>HtpioDownloadManager</code></td><td>Yes</td><td>No: use <code>ResponseType.bytes</code></td></tr><tr><td><code>ConnectivityHelper</code> / <code>OfflineMode</code></td><td>DNS lookup</td><td>Browser online status</td></tr></tbody></table></div>
+</article>
+<article class="item" id="migration" data-name="upgrading from 1.1.x">
+<h3><a class="anchor" href="#migration">Upgrading from 1.1.x</a><span class="kind">guide</span></h3>
+<p>1.2 doesn’t break existing code: the old methods still work but are marked deprecated. Switch at your own pace.</p>
+<div class="scroll"><table class="grid"><thead><tr><th>1.1.x</th><th>1.2+</th></tr></thead><tbody><tr><td><code>getRequest(endpoint: url, fromJson: f)</code></td><td><code>get(url, fromJson: f)</code></td></tr><tr><td><code>postRequest(endpoint: url, data: d, fromJson: f)</code></td><td><code>post(url, data: d, fromJson: f)</code></td></tr><tr><td><code>putRequest</code> / <code>deleteRequest</code></td><td><code>put</code> / <code>delete</code></td></tr><tr><td><code>authToken: t</code></td><td><code>AuthTokenInterceptor(token: t)</code></td></tr><tr><td><code>postSingleFileWithDataRequest</code> / <code>postFilesWithDataRequest</code></td><td><code>post(url, data: FormData.fromMap({...}))</code></td></tr><tr><td><code>request.execute()</code></td><td><code>client.send(request)</code></td></tr></tbody></table></div>
+<p><strong>Behavior changes:</strong> 4xx and 5xx responses now throw <code>HtpioError</code> instead of returning silently. <code>RetryInterceptor</code> and file uploads now actually work.</p>
+</article></section>
+    <footer>
+      <p>htpio 1.2.0 · <a href="https://pub.dev/packages/htpio">pub.dev</a> · <a href="https://github.com/TamoorMunawar/htpio">GitHub</a> · <a href="https://github.com/TamoorMunawar/htpio/issues">Report a problem</a></p>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  // Copy buttons
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.closest('figure').querySelector('pre').innerText;
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); };
+      try {
+        navigator.clipboard.writeText(code).then(done, function () { select(btn); });
+      } catch (e) { select(btn); }
+    });
+  });
+  function select(btn) {
+    var range = document.createRange();
+    range.selectNodeContents(btn.closest('figure').querySelector('pre'));
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    btn.textContent = 'Press Ctrl+C';
+  }
+
+  // Search filters the index and the page
+  function bindSearch(input) {
+    input.addEventListener('input', function () {
+      var q = input.value.trim().toLowerCase();
+      document.querySelectorAll('.search input').forEach(function (other) { if (other !== input) other.value = input.value; });
+      document.querySelectorAll('nav .group').forEach(function (group) {
+        var any = false;
+        group.querySelectorAll('ul a').forEach(function (a) {
+          var hit = !q || a.dataset.name.indexOf(q) !== -1;
+          a.parentElement.hidden = !hit; if (hit) any = true;
+        });
+        group.hidden = !any;
+      });
+      document.querySelectorAll('article.item').forEach(function (art) {
+        art.hidden = !!q && art.dataset.name.indexOf(q) === -1 && art.textContent.toLowerCase().indexOf(q) === -1;
+      });
+      document.querySelectorAll('section.group-sec').forEach(function (sec) {
+        sec.hidden = !sec.querySelector('article.item:not([hidden])');
+      });
+      document.querySelectorAll('.empty').forEach(function (e) {
+        e.hidden = !q || !!document.querySelector('nav .group:not([hidden])');
+      });
+    });
+  }
+  document.querySelectorAll('.search input').forEach(bindSearch);
+
+  // Close the mobile index after choosing a link
+  document.querySelectorAll('.mobile-nav a').forEach(function (a) {
+    a.addEventListener('click', function () { a.closest('details').open = false; });
+  });
+
+  // Highlight the item in view
+  if ('IntersectionObserver' in window) {
+    var links = {};
+    document.querySelectorAll('.side .group ul a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && links[e.target.id]) {
+          Object.keys(links).forEach(function (k) { links[k].classList.remove('on'); });
+          links[e.target.id].classList.add('on');
+        }
+      });
+    }, { rootMargin: '0px 0px -75% 0px' });
+    document.querySelectorAll('article.item').forEach(function (a) { obs.observe(a); });
+  }
+})();
+</script>
+
+</body>
+</html>

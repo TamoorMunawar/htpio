@@ -13,6 +13,8 @@ import 'package:http_parser/http_parser.dart';
 /// await htpio.post('/upload', data: form);
 /// ```
 class FormData {
+  /// Creates an empty form. Add to [fields] and [files], or use
+  /// [FormData.fromMap].
   FormData();
 
   /// Builds a form from a map. [HtpioMultipartFile] values (or lists of them)
@@ -75,6 +77,7 @@ class HtpioMultipartFile {
   /// MIME type, e.g. `image/png`.
   final String? contentType;
 
+  /// Converts this file to an `http.MultipartFile` for the form [field].
   Future<http.MultipartFile> toMultipartFile(String field) async {
     final type = contentType == null ? null : MediaType.parse(contentType!);
     if (_path != null) {

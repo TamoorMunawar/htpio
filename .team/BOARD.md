@@ -11,3 +11,4 @@ Branch for all work: `claude/keen-archimedes-p4xkkp` (session-mandated; replaces
 | Offline mode, connectivity, debug console, Flutter example | Senior B | claude/keen-archimedes-p4xkkp | Flutter | D-8 | Done |
 | Tests (MockClient-based, no real network) | Mid | claude/keen-archimedes-p4xkkp | Tests | all | Done |
 | README / CHANGELOG / doc comments | Mid (reviewed by Lead) | claude/keen-archimedes-p4xkkp | Docs | — | Done |
+| Docs site (every API + examples), dartdoc on all public members | Mid (reviewed by Lead) | claude/keen-archimedes-p4xkkp | Docs | — | Done |

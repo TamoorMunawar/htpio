@@ -18,6 +18,7 @@ enum ResponseType {
 /// A single HTTP request. Usually created for you by `HtpioClient.get`,
 /// `post` and friends; build one yourself only when calling `send`.
 class HtpioRequest<T> {
+  /// Creates a request. Only [url] is required.
   HtpioRequest({
     required this.url,
     this.method = 'GET',
@@ -78,6 +79,7 @@ class HtpioRequest<T> {
   /// Form field name used for [file] and [files].
   final String fileField;
 
+  /// How the body is decoded. Defaults to [ResponseType.json].
   final ResponseType responseType;
 
   /// Accepts or rejects a status code. Rejected codes throw an `HtpioError`

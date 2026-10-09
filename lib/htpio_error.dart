@@ -38,6 +38,7 @@ enum HtpioErrorType {
 /// }
 /// ```
 class HtpioError implements Exception {
+  /// Creates an error with a [message]. htpio fills the other fields for you.
   HtpioError(
     this.message, {
     this.statusCode,
@@ -65,6 +66,7 @@ class HtpioError implements Exception {
   /// HTTP status code, when the server answered.
   final int? statusCode;
 
+  /// Where the error happened, when known.
   final StackTrace? stackTrace;
 
   /// The underlying exception, if any.

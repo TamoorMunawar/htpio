@@ -7,3 +7,5 @@ example/.dart_tool/
 pubspec.lock
 .idea/
 *.iml
+docs/
+tool/

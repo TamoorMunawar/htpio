@@ -20,12 +20,17 @@ class MockServer {
   final Map<String, int> _callCounts = {};
   bool _isEnabled = false;
 
+  /// Turns mocking on.
   void enable() => _isEnabled = true;
 
+  /// Turns mocking off; requests go to the network again.
   void disable() => _isEnabled = false;
 
+  /// Whether mocking is on.
   bool get isEnabled => _isEnabled;
 
+  /// Answers [method] requests to [url] with [data] and [statusCode].
+  /// [url] may be a full URL or just a path like `/users`.
   void registerMock(
     String url,
     dynamic data, {
@@ -104,12 +109,14 @@ class MockServer {
     );
   }
 
+  /// Removes all mocks.
   void clearMocks() {
     _mocks.clear();
     _sequentialMocks.clear();
     _callCounts.clear();
   }
 
+  /// Removes the mock for [url] and [method].
   void removeMock(String url, {String method = 'GET'}) {
     final key = _createKey(method, url);
     _mocks.remove(key);
@@ -123,6 +130,7 @@ class MockServer {
 
 /// A fake response returned by [MockServer].
 class MockResponse {
+  /// Creates a fake response.
   MockResponse({
     required this.data,
     this.statusCode = 200,
@@ -133,7 +141,11 @@ class MockResponse {
   /// Response body as it would look after JSON decoding (a `Map`, `List`,
   /// `String`…).
   final dynamic data;
+
+  /// HTTP status code. Codes outside 200–299 make the client throw.
   final int statusCode;
+
+  /// Response headers.
   final Map<String, String> headers;
 
   /// Simulated network latency.
